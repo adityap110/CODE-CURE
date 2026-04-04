@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
 import sqlite3
 import os
 from datetime import datetime, date
+import re
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "codecure_secret_2025")
@@ -69,13 +71,45 @@ def log_activity(action, detail, user="system"):
     conn.commit()
     conn.close()
 
+def validate_medicine_data(data):
+    """Validate medicine data for add/edit operations"""
+    errors = []
+    if not data.get("name", "").strip():
+        errors.append("Medicine name is required")
+    if len(data.get("name", "")) > 255:
+        errors.append("Medicine name too long (max 255 chars)")
+    try:
+        qty = int(data.get("quantity", 0))
+        if qty < 0:
+            errors.append("Quantity cannot be negative")
+    except (ValueError, TypeError):
+        errors.append("Quantity must be a number")
+    try:
+        min_s = int(data.get("min_stock", 10))
+        if min_s < 0:
+            errors.append("Min stock cannot be negative")
+    except (ValueError, TypeError):
+        errors.append("Min stock must be a number")
+    try:
+        price = float(data.get("price", 0))
+        if price < 0:
+            errors.append("Price cannot be negative")
+    except (ValueError, TypeError):
+        errors.append("Price must be a valid number")
+    return errors
+
 # ─── AUTH ──────────────────────────────────────────────────────────────────────
 
 USERS = {
-    "admin":      {"password": "1234", "role": "Admin"},
-    "pharmacist": {"password": "1234", "role": "Pharmacist"},
-    "doctor":     {"password": "1234", "role": "Doctor"},
+    "admin":      {"password": generate_password_hash("1234"), "role": "Admin"},
+    "pharmacist": {"password": generate_password_hash("1234"), "role": "Pharmacist"},
+    "doctor":     {"password": generate_password_hash("1234"), "role": "Doctor"},
 }
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    return f"<pre>{traceback.format_exc()}</pre>", 500
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -85,7 +119,7 @@ def login():
     if request.method == "POST":
         u = request.form.get("username", "").strip().lower()
         p = request.form.get("password", "").strip()
-        if u in USERS and USERS[u]["password"] == p:
+        if u in USERS and check_password_hash(USERS[u]["password"], p):
             session["user"] = u
             session["role"] = USERS[u]["role"]
             log_activity("Login", f"{u} logged in", u)
@@ -148,18 +182,27 @@ def api_add_medicine():
         return jsonify({"error": "Unauthorized"}), 401
     if session["role"] not in ("Admin", "Pharmacist"):
         return jsonify({"error": "Permission denied"}), 403
+
     data = request.json
+    errors = validate_medicine_data(data)
+    if errors:
+        return jsonify({"error": ", ".join(errors)}), 400
+
     conn = get_db()
-    conn.execute(
-        "INSERT INTO medicines (name,category,quantity,min_stock,expiry_date,supplier,price) VALUES (?,?,?,?,?,?,?)",
-        (data["name"], data.get("category",""), int(data.get("quantity",0)),
-         int(data.get("min_stock",10)), data.get("expiry_date",""),
-         data.get("supplier",""), float(data.get("price",0)))
-    )
-    conn.commit()
-    conn.close()
-    log_activity("Add Medicine", data["name"], session["user"])
-    return jsonify({"success": True})
+    try:
+        conn.execute(
+            "INSERT INTO medicines (name,category,quantity,min_stock,expiry_date,supplier,price) VALUES (?,?,?,?,?,?,?)",
+            (data["name"].strip(), data.get("category","").strip(), int(data.get("quantity",0)),
+             int(data.get("min_stock",10)), data.get("expiry_date",""),
+             data.get("supplier","").strip(), float(data.get("price",0)))
+        )
+        conn.commit()
+        log_activity("Add Medicine", data["name"], session["user"])
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        conn.close()
 
 @app.route("/api/medicines/<int:mid>", methods=["PUT"])
 def api_update_medicine(mid):
@@ -167,18 +210,27 @@ def api_update_medicine(mid):
         return jsonify({"error": "Unauthorized"}), 401
     if session["role"] not in ("Admin", "Pharmacist"):
         return jsonify({"error": "Permission denied"}), 403
+
     data = request.json
+    errors = validate_medicine_data(data)
+    if errors:
+        return jsonify({"error": ", ".join(errors)}), 400
+
     conn = get_db()
-    conn.execute(
-        "UPDATE medicines SET name=?,category=?,quantity=?,min_stock=?,expiry_date=?,supplier=?,price=? WHERE id=?",
-        (data["name"], data.get("category",""), int(data.get("quantity",0)),
-         int(data.get("min_stock",10)), data.get("expiry_date",""),
-         data.get("supplier",""), float(data.get("price",0)), mid)
-    )
-    conn.commit()
-    conn.close()
-    log_activity("Edit Medicine", f"ID {mid} updated", session["user"])
-    return jsonify({"success": True})
+    try:
+        conn.execute(
+            "UPDATE medicines SET name=?,category=?,quantity=?,min_stock=?,expiry_date=?,supplier=?,price=? WHERE id=?",
+            (data["name"].strip(), data.get("category","").strip(), int(data.get("quantity",0)),
+             int(data.get("min_stock",10)), data.get("expiry_date",""),
+             data.get("supplier","").strip(), float(data.get("price",0)), mid)
+        )
+        conn.commit()
+        log_activity("Edit Medicine", f"ID {mid} updated", session["user"])
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        conn.close()
 
 @app.route("/api/medicines/<int:mid>", methods=["DELETE"])
 def api_delete_medicine(mid):
@@ -225,6 +277,24 @@ def api_chart_category():
         return jsonify({"error": "Unauthorized"}), 401
     conn = get_db()
     rows = conn.execute("SELECT category, SUM(quantity) as total FROM medicines GROUP BY category").fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+@app.route("/api/search")
+def api_search():
+    """Search medicines by name, category, or supplier"""
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    q = request.args.get("q", "").strip()
+    if not q or len(q) < 2:
+        return jsonify([])
+
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, name, category, quantity, expiry_date, supplier FROM medicines WHERE LOWER(name) LIKE ? OR LOWER(category) LIKE ? OR LOWER(supplier) LIKE ? ORDER BY name LIMIT 15",
+        (f"%{q.lower()}%", f"%{q.lower()}%", f"%{q.lower()}%")
+    ).fetchall()
     conn.close()
     return jsonify([dict(r) for r in rows])
 
@@ -306,6 +376,12 @@ GENERAL_TIPS = [
     "💡 Train staff on proper handling of cytotoxic and hazardous drugs.",
     "💡 Set reorder points at 20% above minimum stock levels for safety.",
     "💡 Separate look-alike/sound-alike (LASA) medications to prevent errors.",
+    "💡 Implement barcode scanning for accurate inventory tracking and reduced errors.",
+    "💡 Schedule regular audits (quarterly) to prevent discrepancies and shrinkage.",
+    "💡 Use color-coded labels for different medicine categories for quick identification.",
+    "💡 Maintain a cold chain log for temperature-sensitive medicines.",
+    "💡 Train staff on proper PPE usage when handling hazardous substances.",
+    "💡 Keep detailed records of medicine recalls and disposal procedures.",
 ]
 
 @app.route("/api/chat", methods=["POST"])
@@ -336,7 +412,8 @@ def process_chat(msg, user, role):
                 "• 💊 **Medicine info** — dosage, side effects, interactions\n"
                 "• ⚠️ **Alerts** — expired or low stock items\n"
                 "• 💡 **Tips** — inventory management best practices\n"
-                "• 🔍 **Search** — find specific medicines\n\n"
+                "• 🔍 **Search** — find specific medicines\n"
+                "• 📊 **Reports** — stock value & statistics\n\n"
                 "What would you like to know?")
 
     # ── Help ──
@@ -350,7 +427,8 @@ def process_chat(msg, user, role):
                 "🏥 **\"storage [medicine]\"** — Storage instructions\n"
                 "📋 **\"expired\"** — List expired medicines\n"
                 "💡 **\"tip\"** — Random inventory management tip\n"
-                "📊 **\"summary\"** — Full inventory summary")
+                "📊 **\"summary\"** — Full inventory summary\n"
+                "🔍 **\"search [medicine]\"** — Find a specific medicine")
 
     # ── Stock Status ──
     if any(k in msg for k in ["stock status", "inventory status", "overview", "summary", "how many", "total"]):
@@ -434,8 +512,8 @@ def process_chat(msg, user, role):
                     f"⚠️ *This is for reference only. Always consult a healthcare professional.*")
 
     # ── Search Medicine ──
-    if any(k in msg for k in ["search", "find", "look up", "check"]):
-        search_term = msg.replace("search", "").replace("find", "").replace("look up", "").replace("check", "").strip()
+    if any(k in msg for k in ["search", "find", "look up", "check", "available", "have", "stock"]):
+        search_term = msg.replace("search", "").replace("find", "").replace("look up", "").replace("check", "").replace("available", "").replace("have", "").replace("stock", "").strip()
         if search_term:
             conn = get_db()
             rows = conn.execute("SELECT name, quantity, expiry_date, category FROM medicines WHERE LOWER(name) LIKE ?", (f"%{search_term}%",)).fetchall()
@@ -455,7 +533,7 @@ def process_chat(msg, user, role):
         return f"You're welcome, {user.capitalize()}! 😊 I'm always here to help. Feel free to ask anything else!"
 
     # ── Bye ──
-    if any(k in msg for k in ["bye", "goodbye", "see you", "exit"]):
+    if any(k in msg for k in ["bye", "goodbye", "see you", "exit", "quit"]):
         return f"Goodbye, {user.capitalize()}! 👋 Stay healthy and keep your inventory in check! 🏥"
 
     # ── Fallback ──
@@ -467,6 +545,7 @@ def process_chat(msg, user, role):
             "• **\"dosage amoxicillin\"** — dosage info\n"
             "• **\"interactions metformin\"** — drug interactions\n"
             "• **\"tip\"** — management best practice\n"
+            "• **\"search aspirin\"** — find a medicine\n"
             "• **\"help\"** — full command list")
 
 
