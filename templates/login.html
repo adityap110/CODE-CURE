@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="CodeCure — Smart Medical Inventory Management System Login"/>
+<title>CodeCure — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ═══════════════════════════════════════════════════════════════
+     THEMES — 6 curated color palettes
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* 1. Teal Surge (default) */
+  :root, [data-theme="teal"] {
+    --accent:    #0d9488;
+    --accent2:   #14b8a6;
+    --accent3:   #5eead4;
+    --glow:      rgba(13,148,136,.35);
+    --glow-soft: rgba(13,148,136,.10);
+    --bg-deep:   #0a0f1a;
+    --bg-card:   rgba(15,23,42,.75);
+    --bg-input:  rgba(8,12,25,.7);
+    --border:    rgba(13,148,136,.22);
+    --muted:     #7b8ba3;
+    --white:     #f1f5f9;
+    --red:       #f43f5e;
+    --orb1-clr:  rgba(13,148,136,.20);
+    --orb2-clr:  rgba(20,184,166,.14);
+    --grid-clr:  rgba(13,148,136,.06);
+    --particle:  rgba(94,234,212,.6);
+  }
+
+  /* 2. Violet Nebula */
+  [data-theme="violet"] {
+    --accent:    #7c3aed;
+    --accent2:   #a78bfa;
+    --accent3:   #c4b5fd;
+    --glow:      rgba(124,58,237,.35);
+    --glow-soft: rgba(124,58,237,.10);
+    --bg-deep:   #0c0a1a;
+    --bg-card:   rgba(18,12,42,.75);
+    --bg-input:  rgba(10,8,28,.7);
+    --border:    rgba(124,58,237,.22);
+    --muted:     #8b7fad;
+    --white:     #f0eef9;
+    --red:       #f43f5e;
+    --orb1-clr:  rgba(124,58,237,.20);
+    --orb2-clr:  rgba(167,139,250,.14);
+    --grid-clr:  rgba(124,58,237,.06);
+    --particle:  rgba(196,181,253,.6);
+  }
+
+  /* 3. Sunset Blaze */
+  [data-theme="sunset"] {
+    --accent:    #ea580c;
+    --accent2:   #f97316;
+    --accent3:   #fdba74;
+    --glow:      rgba(234,88,12,.35);
+    --glow-soft: rgba(234,88,12,.10);
+    --bg-deep:   #120c08;
+    --bg-card:   rgba(30,18,10,.75);
+    --bg-input:  rgba(18,10,5,.7);
+    --border:    rgba(234,88,12,.22);
+    --muted:     #a3876b;
+    --white:     #fef3e2;
+    --red:       #ef4444;
+    --orb1-clr:  rgba(234,88,12,.20);
+    --orb2-clr:  rgba(249,115,22,.14);
+    --grid-clr:  rgba(234,88,12,.06);
+    --particle:  rgba(253,186,116,.6);
+  }
+
+  /* 4. Ocean Depths */
+  [data-theme="ocean"] {
+    --accent:    #0369a1;
+    --accent2:   #0ea5e9;
+    --accent3:   #7dd3fc;
+    --glow:      rgba(3,105,161,.35);
+    --glow-soft: rgba(3,105,161,.10);
+    --bg-deep:   #060d14;
+    --bg-card:   rgba(8,20,35,.75);
+    --bg-input:  rgba(5,12,22,.7);
+    --border:    rgba(14,165,233,.22);
+    --muted:     #6b8fa8;
+    --white:     #e8f4fc;
+    --red:       #f43f5e;
+    --orb1-clr:  rgba(3,105,161,.20);
+    --orb2-clr:  rgba(14,165,233,.14);
+    --grid-clr:  rgba(14,165,233,.06);
+    --particle:  rgba(125,211,252,.6);
+  }
+
+  /* 5. Rose Gold */
+  [data-theme="rose"] {
+    --accent:    #be185d;
+    --accent2:   #ec4899;
+    --accent3:   #f9a8d4;
+    --glow:      rgba(190,24,93,.35);
+    --glow-soft: rgba(190,24,93,.10);
+    --bg-deep:   #12080c;
+    --bg-card:   rgba(30,12,20,.75);
+    --bg-input:  rgba(18,6,12,.7);
+    --border:    rgba(236,72,153,.22);
+    --muted:     #a37a8c;
+    --white:     #fce7f3;
+    --red:       #ef4444;
+    --orb1-clr:  rgba(190,24,93,.20);
+    --orb2-clr:  rgba(236,72,153,.14);
+    --grid-clr:  rgba(236,72,153,.06);
+    --particle:  rgba(249,168,212,.6);
+  }
+
+  /* 6. Emerald Forest */
+  [data-theme="emerald"] {
+    --accent:    #059669;
+    --accent2:   #10b981;
+    --accent3:   #6ee7b7;
+    --glow:      rgba(5,150,105,.35);
+    --glow-soft: rgba(5,150,105,.10);
+    --bg-deep:   #060f0b;
+    --bg-card:   rgba(8,25,18,.75);
+    --bg-input:  rgba(4,14,10,.7);
+    --border:    rgba(16,185,129,.22);
+    --muted:     #6ba38e;
+    --white:     #ecfdf5;
+    --red:       #f43f5e;
+    --orb1-clr:  rgba(5,150,105,.20);
+    --orb2-clr:  rgba(16,185,129,.14);
+    --grid-clr:  rgba(16,185,129,.06);
+    --particle:  rgba(110,231,183,.6);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     BASE LAYOUT
+     ═══════════════════════════════════════════════════════════════ */
+
+  body {
+    min-height: 100vh;
+    background: var(--bg-deep);
+    font-family: 'Inter', 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    transition: background .5s ease;
+  }
+
+  /* Animated grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid-clr) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-clr) 1px, transparent 1px);
+    background-size: 48px 48px;
+    animation: gridMove 25s linear infinite;
+    transition: background-image .5s;
+  }
+  @keyframes gridMove { to { background-position: 48px 48px; } }
+
+  /* Radial vignette */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, var(--bg-deep) 100%);
+    pointer-events: none;
+  }
+
+  /* ═══ FLOATING ORBS ═══ */
+  .orb {
+    position: fixed; border-radius: 50%;
+    filter: blur(90px); pointer-events: none;
+    transition: background .5s;
+  }
+  .orb1 { width:480px; height:480px; top:-140px; right:-140px; background:var(--orb1-clr); animation: float1 9s ease-in-out infinite; }
+  .orb2 { width:360px; height:360px; bottom:-100px; left:-100px; background:var(--orb2-clr); animation: float2 11s ease-in-out infinite; }
+  .orb3 { width:200px; height:200px; top:50%; left:15%; background:var(--orb1-clr); opacity:.5; animation: float3 14s ease-in-out infinite; }
+  @keyframes float1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-40px,40px) scale(1.05)} }
+  @keyframes float2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,-30px) scale(1.08)} }
+  @keyframes float3 { 0%,100%{transform:translate(0,0)} 33%{transform:translate(20px,-30px)} 66%{transform:translate(-20px,20px)} }
+
+  /* ═══ PARTICLES ═══ */
+  .particles {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 1;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    width: 3px; height: 3px;
+    background: var(--particle);
+    border-radius: 50%;
+    animation: particleFloat linear infinite;
+  }
+  @keyframes particleFloat {
+    0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+  }
+
+  /* ═══ THEME SWITCHER ═══ */
+  .theme-switcher {
+    position: fixed;
+    top: 20px; right: 20px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: fadeSlideDown .6s .3s both;
+  }
+  @keyframes fadeSlideDown { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:none} }
+
+  .theme-label {
+    font-size: .7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+
+  .theme-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .theme-dot::before {
+    content: '';
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    transition: transform .25s, box-shadow .25s;
+  }
+  .theme-dot:hover { transform: scale(1.15); }
+  .theme-dot:hover::before { box-shadow: 0 0 12px var(--glow); }
+  .theme-dot.active { border-color: var(--white); }
+  .theme-dot.active::before { transform: scale(1.1); }
+
+  .theme-dot[data-t="teal"]::before    { background: linear-gradient(135deg, #0d9488, #14b8a6); }
+  .theme-dot[data-t="violet"]::before  { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
+  .theme-dot[data-t="sunset"]::before  { background: linear-gradient(135deg, #ea580c, #f97316); }
+  .theme-dot[data-t="ocean"]::before   { background: linear-gradient(135deg, #0369a1, #0ea5e9); }
+  .theme-dot[data-t="rose"]::before    { background: linear-gradient(135deg, #be185d, #ec4899); }
+  .theme-dot[data-t="emerald"]::before { background: linear-gradient(135deg, #059669, #10b981); }
+
+  /* Tooltip */
+  .theme-dot .tip {
+    position: absolute;
+    bottom: -26px; left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    font-size: .62rem;
+    color: var(--white);
+    background: rgba(0,0,0,.7);
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all .2s;
+    backdrop-filter: blur(6px);
+  }
+  .theme-dot:hover .tip { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ═══ LOGIN CARD ═══ */
+  .card {
+    position: relative; z-index: 10;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 52px 44px 44px;
+    width: 440px;
+    backdrop-filter: blur(24px) saturate(1.3);
+    box-shadow:
+      0 0 80px var(--glow-soft),
+      0 40px 80px rgba(0,0,0,.5),
+      inset 0 1px 0 rgba(255,255,255,.04);
+    animation: cardIn .7s cubic-bezier(.16,1,.3,1) both;
+    transition: background .5s, border-color .5s, box-shadow .5s;
+  }
+  @keyframes cardIn { from{opacity:0;transform:translateY(30px) scale(.97)} to{opacity:1;transform:none} }
+
+  /* Accent glow line on top */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 40px; right: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+    border-radius: 2px;
+    transition: background .5s;
+  }
+
+  /* ═══ LOGO ═══ */
+  .logo-wrap { text-align: center; margin-bottom: 36px; }
+  .logo-icon {
+    width: 68px; height: 68px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 20px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 30px var(--glow);
+    animation: logoFloat 4s ease-in-out infinite;
+    transition: background .5s, box-shadow .5s;
+  }
+  @keyframes logoFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+  .logo-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.1rem;
+    color: var(--white);
+    letter-spacing: -.5px;
+    line-height: 1.1;
+  }
+  .logo-title span { color: var(--accent2); transition: color .5s; }
+  .logo-sub {
+    font-size: .72rem;
+    color: var(--muted);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  /* ═══ ROLE TABS ═══ */
+  .role-tabs { display: flex; gap: 8px; margin-bottom: 30px; }
+  .role-tab {
+    flex: 1;
+    padding: 12px 8px;
+    border: 1px solid rgba(148,163,184,.12);
+    border-radius: 14px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: .76rem;
+    font-weight: 500;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .role-tab::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    opacity: 0;
+    transition: opacity .25s;
+    border-radius: 14px;
+  }
+  .role-tab:hover { border-color: var(--accent); color: var(--accent2); transform: translateY(-1px); }
+  .role-tab.active {
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 4px 16px var(--glow-soft);
+  }
+  .role-tab.active::before { opacity: .2; }
+  .role-tab .tab-icon { display: block; font-size: 1.3rem; margin-bottom: 4px; position: relative; z-index: 1; }
+  .role-tab .tab-label { position: relative; z-index: 1; }
+
+  /* ═══ FORM ELEMENTS ═══ */
+  .form-label {
+    display: block;
+    font-size: .7rem;
+    color: var(--muted);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 7px;
+    font-weight: 600;
+  }
+
+  .input-wrap {
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .input-wrap input {
+    width: 100%;
+    padding: 14px 44px 14px 48px;
+    background: var(--bg-input);
+    border: 1px solid rgba(148,163,184,.12);
+    border-radius: 14px;
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: .92rem;
+    outline: none;
+    transition: border-color .25s, box-shadow .25s, background .25s;
+  }
+  .input-wrap input::placeholder { color: rgba(148,163,184,.4); }
+  .input-wrap input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--glow-soft), 0 0 20px var(--glow-soft);
+    background: var(--bg-input);
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 16px; top: 50%;
+    transform: translateY(-50%);
+    width: 20px; height: 20px;
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    transition: color .25s;
+  }
+  .input-wrap input:focus ~ .input-icon { color: var(--accent2); }
+
+  .input-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* Password visibility toggle */
+  .toggle-pw {
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex; align-items: center;
+    transition: color .2s;
+  }
+  .toggle-pw:hover { color: var(--accent2); }
+  .toggle-pw svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ═══ HINT ═══ */
+  .hint {
+    font-size: .72rem;
+    color: var(--muted);
+    background: var(--glow-soft);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 24px;
+    border-left: 3px solid var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background .5s, border-color .5s;
+  }
+  .hint b { color: var(--accent2); }
+  .hint-icon { font-size: .9rem; flex-shrink: 0; }
+
+  /* ═══ ERROR ═══ */
+  .error-box {
+    background: rgba(244,63,94,.1);
+    border: 1px solid rgba(244,63,94,.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #fda4af;
+    font-size: .84rem;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: shake .4s ease-in-out;
+  }
+  @keyframes shake {
+    0%,100%{ transform: translateX(0); }
+    25%{ transform: translateX(-6px); }
+    50%{ transform: translateX(6px); }
+    75%{ transform: translateX(-3px); }
+  }
+
+  /* ═══ LOGIN BUTTON ═══ */
+  .btn-login {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: .02em;
+    box-shadow: 0 6px 24px var(--glow);
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-login::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.15), transparent);
+    opacity: 0;
+    transition: opacity .25s;
+  }
+  .btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 36px var(--glow);
+  }
+  .btn-login:hover::before { opacity: 1; }
+  .btn-login:active { transform: translateY(0); box-shadow: 0 4px 16px var(--glow); }
+
+  /* Button loading ripple */
+  .btn-login .btn-text { position: relative; z-index: 1; }
+
+  /* ═══ FOOTER ═══ */
+  .footer {
+    text-align: center;
+    margin-top: 28px;
+    color: var(--muted);
+    font-size: .7rem;
+    line-height: 1.7;
+    letter-spacing: .02em;
+  }
+  .footer a {
+    color: var(--accent2);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color .2s;
+  }
+  .footer a:hover { text-decoration: underline; }
+
+  .footer .divider {
+    display: inline-block;
+    width: 3px; height: 3px;
+    background: var(--muted);
+    border-radius: 50%;
+    vertical-align: middle;
+    margin: 0 8px;
+    opacity: .5;
+  }
+
+  /* ═══ STATUS BAR ═══ */
+  .status-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .65rem;
+    color: var(--muted);
+    letter-spacing: .06em;
+    animation: fadeSlideDown .6s .6s both;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 520px) {
+    .card { width: calc(100% - 32px); padding: 40px 28px 36px; border-radius: 22px; }
+    .logo-icon { width: 56px; height: 56px; font-size: 24px; border-radius: 16px; }
+    .logo-title { font-size: 1.7rem; }
+    .theme-switcher { top: 12px; right: 12px; gap: 5px; }
+    .theme-dot { width: 24px; height: 24px; }
+    .theme-dot::before { width: 14px; height: 14px; }
+    .theme-label { display: none; }
+    .role-tab { padding: 10px 4px; font-size: .7rem; }
+    .role-tab .tab-icon { font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Background elements -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+<div class="particles" id="particles"></div>
+
+<!-- Theme Switcher -->
+<div class="theme-switcher" id="theme-switcher">
+  <span class="theme-label">Theme</span>
+  <div class="theme-dot active" data-t="teal" onclick="setTheme('teal')">
+    <span class="tip">Teal Surge</span>
+  </div>
+  <div class="theme-dot" data-t="violet" onclick="setTheme('violet')">
+    <span class="tip">Violet Nebula</span>
+  </div>
+  <div class="theme-dot" data-t="sunset" onclick="setTheme('sunset')">
+    <span class="tip">Sunset Blaze</span>
+  </div>
+  <div class="theme-dot" data-t="ocean" onclick="setTheme('ocean')">
+    <span class="tip">Ocean Depths</span>
+  </div>
+  <div class="theme-dot" data-t="rose" onclick="setTheme('rose')">
+    <span class="tip">Rose Gold</span>
+  </div>
+  <div class="theme-dot" data-t="emerald" onclick="setTheme('emerald')">
+    <span class="tip">Emerald Forest</span>
+  </div>
+</div>
+
+<!-- Login Card -->
+<div class="card" id="login-card">
+  <div class="logo-wrap">
+    <div class="logo-icon">🏥</div>
+    <div class="logo-title">Code<span>Cure</span></div>
+    <div class="logo-sub">Smart Medical Inventory</div>
+  </div>
+
+  <!-- Role quick-fill tabs -->
+  <div class="role-tabs">
+    <button class="role-tab active" id="role-admin" onclick="setRole('admin','1234',this)">
+      <span class="tab-icon">👨‍💼</span><span class="tab-label">Admin</span>
+    </button>
+    <button class="role-tab" id="role-pharmacist" onclick="setRole('pharmacist','1234',this)">
+      <span class="tab-icon">💊</span><span class="tab-label">Pharmacist</span>
+    </button>
+    <button class="role-tab" id="role-doctor" onclick="setRole('doctor','1234',this)">
+      <span class="tab-icon">🩺</span><span class="tab-label">Doctor</span>
+    </button>
+  </div>
+
+  <form method="POST" action="/" id="login-form">
+    {% if error %}
+    <div class="error-box">
+      <span>⚠️</span> {{ error }}
+    </div>
+    {% endif %}
+
+    <label class="form-label" for="username">Username</label>
+    <div class="input-wrap">
+      <input id="username" name="username" type="text" placeholder="Enter your username" required autocomplete="username"/>
+      <div class="input-icon">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+    </div>
+
+    <label class="form-label" for="password">Password</label>
+    <div class="input-wrap">
+      <input id="password" name="password" type="password" placeholder="Enter your password" required autocomplete="current-password"/>
+      <div class="input-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <button type="button" class="toggle-pw" id="toggle-pw" onclick="togglePassword()">
+        <svg id="eye-open" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg id="eye-closed" viewBox="0 0 24 24" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </button>
+    </div>
+
+    <div class="hint">
+      <span class="hint-icon">💡</span>
+      <span>Demo password: <b>1234</b> for all roles</span>
+    </div>
+
+    <button class="btn-login" type="submit" id="btn-login">
+      <span class="btn-text">🔐 Sign In to CodeCure</span>
+    </button>
+  </form>
+
+  <div class="footer">
+    🏥 City General Hospital <span class="divider"></span> Medical Store Unit<br/>
+    <a href="#">© 2025 CodeCure Team</a>
+  </div>
+</div>
+
+<!-- Status indicator -->
+<div class="status-bar">
+  <div class="status-dot"></div>
+  <span>System Online — Secure Connection</span>
+</div>
+
+<script>
+// ── THEME MANAGEMENT ─────────────────────────────────────────────────
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('codecure-theme', theme);
+
+  // Update active dot
+  document.querySelectorAll('.theme-dot').forEach(d => {
+    d.classList.toggle('active', d.dataset.t === theme);
+  });
+}
+
+// Restore saved theme
+(function() {
+  const saved = localStorage.getItem('codecure-theme');
+  if (saved) setTheme(saved);
+})();
+
+// ── ROLE TABBING ─────────────────────────────────────────────────────
+function setRole(user, pass, el) {
+  document.getElementById('username').value = user;
+  document.getElementById('password').value = pass;
+  document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+
+  // Subtle focus animation
+  document.getElementById('username').focus();
+  setTimeout(() => document.getElementById('password').focus(), 150);
+  setTimeout(() => document.getElementById('username').blur(), 300);
+  setTimeout(() => document.getElementById('password').blur(), 300);
+}
+
+// ── PASSWORD TOGGLE ──────────────────────────────────────────────────
+function togglePassword() {
+  const pw = document.getElementById('password');
+  const open = document.getElementById('eye-open');
+  const closed = document.getElementById('eye-closed');
+
+  if (pw.type === 'password') {
+    pw.type = 'text';
+    open.style.display = 'none';
+    closed.style.display = 'block';
+  } else {
+    pw.type = 'password';
+    open.style.display = 'block';
+    closed.style.display = 'none';
+  }
+}
+
+// ── FLOATING PARTICLES ───────────────────────────────────────────────
+(function createParticles() {
+  const container = document.getElementById('particles');
+  const count = 30;
+  for (let i = 0; i < count; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.width = (Math.random() * 3 + 1) + 'px';
+    particle.style.height = particle.style.width;
+    particle.style.animationDuration = (Math.random() * 12 + 8) + 's';
+    particle.style.animationDelay = (Math.random() * 10) + 's';
+    particle.style.opacity = Math.random() * 0.5 + 0.2;
+    container.appendChild(particle);
+  }
+})();
+
+// ── FORM SUBMIT ANIMATION ────────────────────────────────────────────
+document.getElementById('login-form').addEventListener('submit', function() {
+  const btn = document.getElementById('btn-login');
+  btn.querySelector('.btn-text').textContent = '⏳ Signing in…';
+  btn.style.opacity = '.8';
+  btn.style.pointerEvents = 'none';
+});
+
+// ── KEYBOARD SHORTCUT: Enter on role tab ─────────────────────────────
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.activeElement.classList.contains('role-tab')) {
+    document.activeElement.click();
+    e.preventDefault();
+  }
+  // 1-3 quick role select
+  if (e.altKey && ['1','2','3'].includes(e.key)) {
+    e.preventDefault();
+    const tabs = ['role-admin','role-pharmacist','role-doctor'];
+    document.getElementById(tabs[parseInt(e.key)-1]).click();
+  }
+});
+</script>
+</body>
+</html>

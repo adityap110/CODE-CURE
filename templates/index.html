@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="CodeCure — Smart Medical Inventory Management System Dashboard"/>
+<title>CodeCure — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ═══ THEME 1: Teal Surge (default) ═══ */
+:root, [data-theme="teal"] {
+  --accent:#0d9488; --accent2:#14b8a6; --accent3:#5eead4;
+  --navy:#0f172a; --slate:#1e293b; --slate2:#273548;
+  --border:rgba(13,148,136,.2); --glow:rgba(13,148,136,.25); --glow-soft:rgba(13,148,136,.10);
+  --muted:#64748b; --light:#94a3b8; --white:#f1f5f9;
+  --red:#f43f5e; --yellow:#f59e0b; --green:#10b981;
+  --sidebar-w:250px;
+  --chart-1:#0d9488; --chart-2:#14b8a6; --chart-3:#5eead4;
+}
+/* ═══ THEME 2: Violet Nebula ═══ */
+[data-theme="violet"] {
+  --accent:#7c3aed; --accent2:#a78bfa; --accent3:#c4b5fd;
+  --navy:#0c0a1a; --slate:#15122b; --slate2:#1e1a35;
+  --border:rgba(124,58,237,.2); --glow:rgba(124,58,237,.25); --glow-soft:rgba(124,58,237,.10);
+  --muted:#7b7494; --light:#a09ab8; --white:#f0eef9;
+  --red:#f43f5e; --yellow:#f59e0b; --green:#10b981;
+  --chart-1:#7c3aed; --chart-2:#a78bfa; --chart-3:#c4b5fd;
+}
+/* ═══ THEME 3: Sunset Blaze ═══ */
+[data-theme="sunset"] {
+  --accent:#ea580c; --accent2:#f97316; --accent3:#fdba74;
+  --navy:#120c08; --slate:#1e150e; --slate2:#2a1f15;
+  --border:rgba(234,88,12,.2); --glow:rgba(234,88,12,.25); --glow-soft:rgba(234,88,12,.10);
+  --muted:#8b7460; --light:#b09580; --white:#fef3e2;
+  --red:#ef4444; --yellow:#f59e0b; --green:#10b981;
+  --chart-1:#ea580c; --chart-2:#f97316; --chart-3:#fdba74;
+}
+/* ═══ THEME 4: Ocean Depths ═══ */
+[data-theme="ocean"] {
+  --accent:#0369a1; --accent2:#0ea5e9; --accent3:#7dd3fc;
+  --navy:#060d14; --slate:#0e1a28; --slate2:#142535;
+  --border:rgba(14,165,233,.2); --glow:rgba(14,165,233,.25); --glow-soft:rgba(14,165,233,.10);
+  --muted:#5c7d94; --light:#7ea3bc; --white:#e8f4fc;
+  --red:#f43f5e; --yellow:#f59e0b; --green:#10b981;
+  --chart-1:#0369a1; --chart-2:#0ea5e9; --chart-3:#7dd3fc;
+}
+/* ═══ THEME 5: Rose Gold ═══ */
+[data-theme="rose"] {
+  --accent:#be185d; --accent2:#ec4899; --accent3:#f9a8d4;
+  --navy:#12080c; --slate:#1e1016; --slate2:#2a1820;
+  --border:rgba(236,72,153,.2); --glow:rgba(236,72,153,.25); --glow-soft:rgba(236,72,153,.10);
+  --muted:#8b6878; --light:#b08898; --white:#fce7f3;
+  --red:#ef4444; --yellow:#f59e0b; --green:#10b981;
+  --chart-1:#be185d; --chart-2:#ec4899; --chart-3:#f9a8d4;
+}
+/* ═══ THEME 6: Emerald Forest ═══ */
+[data-theme="emerald"] {
+  --accent:#059669; --accent2:#10b981; --accent3:#6ee7b7;
+  --navy:#060f0b; --slate:#0e1e16; --slate2:#152a20;
+  --border:rgba(16,185,129,.2); --glow:rgba(16,185,129,.25); --glow-soft:rgba(16,185,129,.10);
+  --muted:#5c8b75; --light:#7eb09a; --white:#ecfdf5;
+  --red:#f43f5e; --yellow:#f59e0b; --green:#10b981;
+  --chart-1:#059669; --chart-2:#10b981; --chart-3:#6ee7b7;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--navy); color: var(--white);
+  font-family: 'Inter', 'DM Sans', sans-serif;
+  display: flex; min-height: 100vh;
+  transition: background .4s ease, color .4s ease;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: var(--slate);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: fixed; top:0; left:0; bottom:0; z-index:100;
+  transition: background .4s ease, border-color .4s ease;
+}
+.sidebar-logo {
+  padding: 24px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.logo-icon-sm {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 12px; display: flex; align-items:center; justify-content:center;
+  font-size: 18px; box-shadow: 0 4px 12px var(--glow);
+  transition: background .4s ease, box-shadow .4s ease;
+}
+.logo-text { font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--white); }
+.logo-text span { color: var(--accent2); transition: color .4s ease; }
+
+.sidebar-user {
+  margin: 16px 14px;
+  padding: 12px 14px;
+  background: var(--glow-soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: background .4s ease;
+}
+.sidebar-user .u-role { font-size: .7rem; color: var(--accent2); text-transform:uppercase; letter-spacing:.08em; font-weight:600; transition: color .4s ease; }
+.sidebar-user .u-name { font-size: .9rem; color: var(--white); font-weight:600; text-transform:capitalize; }
+
+nav { flex: 1; padding: 8px 12px; }
+.nav-section { font-size: .65rem; color: var(--muted); text-transform:uppercase; letter-spacing:.1em; padding: 16px 8px 6px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; border-radius: 10px;
+  color: var(--light); font-size: .88rem; font-weight:500;
+  cursor: pointer; transition: all .18s; margin-bottom: 2px;
+  border: 1px solid transparent;
+}
+.nav-item:hover { background: var(--glow-soft); color: var(--accent2); }
+.nav-item.active { background: rgba(from var(--accent) r g b / .18); color: var(--accent2); border-color: var(--border); }
+@supports not (background: rgba(from red r g b / 1)) {
+  .nav-item.active { background: var(--glow-soft); }
+}
+.nav-item .nav-icon { font-size: 1rem; width:20px; text-align:center; }
+.nav-badge { margin-left:auto; background:var(--red); color:#fff; border-radius:9px; padding:2px 7px; font-size:.68rem; font-weight:700; }
+
+.sidebar-footer {
+  padding: 14px;
+  border-top: 1px solid var(--border);
+}
+.btn-logout {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 10px 14px; border-radius: 10px;
+  background: rgba(244,63,94,.1); border: 1px solid rgba(244,63,94,.25);
+  color: #fda4af; cursor:pointer; font-family:'DM Sans',sans-serif;
+  font-size:.85rem; font-weight:500; transition: all .18s;
+  text-decoration: none;
+}
+.btn-logout:hover { background: rgba(244,63,94,.2); }
+
+/* ── MAIN ── */
+.main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+
+.topbar {
+  background: rgba(from var(--slate) r g b / .85);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: blur(14px);
+  position: sticky; top:0; z-index:50;
+  transition: background .4s ease, border-color .4s ease;
+}
+@supports not (background: rgba(from red r g b / 1)) {
+  .topbar { background: rgba(30,41,59,.85); }
+}
+.topbar-title { font-family:'DM Serif Display',serif; font-size:1.4rem; }
+.topbar-right { display:flex; align-items:center; gap:12px; }
+.clock { font-size:.9rem; color:var(--light); font-weight:500; }
+.topbar-alert-dot {
+  width:8px; height:8px; border-radius:50%; background:var(--red);
+  box-shadow: 0 0 8px var(--red); animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+.content { padding: 28px; flex:1; }
+
+/* ── SECTIONS ── */
+.section { display: none; animation: fadeUp .45s cubic-bezier(.16,1,.3,1) both; }
+.section.active { display: block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+
+/* ── STAT CARDS ── */
+.stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 18px; margin-bottom: 28px; }
+.stat-card {
+  background: var(--slate);
+  border: 1px solid var(--border);
+  border-radius: 18px; padding: 22px;
+  position: relative; overflow: hidden;
+  transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s ease, background .4s ease;
+}
+.stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.35); }
+.stat-card::before {
+  content:''; position:absolute; top:0; right:0;
+  width:80px; height:80px; border-radius:0 16px 0 80px;
+  opacity:.12;
+}
+.stat-card.ok::before   { background: var(--green); }
+.stat-card.low::before  { background: var(--yellow); }
+.stat-card.exp::before  { background: var(--red); }
+.stat-card.total::before{ background: var(--accent2); }
+.stat-num { font-family:'DM Serif Display',serif; font-size:2.4rem; line-height:1; margin-bottom:4px; }
+.stat-label { font-size:.78rem; color:var(--light); text-transform:uppercase; letter-spacing:.06em; }
+.stat-icon { font-size:1.6rem; position:absolute; top:18px; right:18px; opacity:.7; }
+.stat-sub { font-size:.72rem; color:var(--muted); margin-top:8px; }
+
+/* ── GRID 2-COL ── */
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+.grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-bottom:20px; }
+
+/* ── CARD ── */
+.card {
+  background: var(--slate);
+  border: 1px solid var(--border);
+  border-radius: 18px; overflow: hidden;
+  transition: background .4s ease, border-color .4s ease;
+}
+.card-header {
+  padding: 18px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-weight:600; font-size:.95rem; }
+.card-body { padding: 20px; }
+
+/* ── ALERTS ── */
+.alert-item {
+  display:flex; align-items:center; gap:12px;
+  padding: 12px 16px; border-radius:10px; margin-bottom:8px;
+  border: 1px solid;
+}
+.alert-item.low  { background:rgba(245,158,11,.08); border-color:rgba(245,158,11,.25); }
+.alert-item.expired { background:rgba(244,63,94,.08); border-color:rgba(244,63,94,.25); }
+.alert-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.alert-item.low .alert-dot  { background:var(--yellow); box-shadow:0 0 6px var(--yellow); }
+.alert-item.expired .alert-dot { background:var(--red); box-shadow:0 0 6px var(--red); }
+.alert-name { font-size:.88rem; font-weight:600; color:var(--white); }
+.alert-detail { font-size:.76rem; color:var(--light); }
+
+/* ── ACTIVITY ── */
+.activity-item {
+  display:flex; align-items:center; gap:12px;
+  padding: 10px 0; border-bottom: 1px solid rgba(148,163,184,.08);
+}
+.activity-item:last-child { border-bottom: none; }
+.act-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.9rem; flex-shrink:0; background:var(--glow-soft); }
+.act-action { font-size:.85rem; font-weight:500; color:var(--white); }
+.act-detail { font-size:.75rem; color:var(--muted); }
+.act-time { margin-left:auto; font-size:.7rem; color:var(--muted); white-space:nowrap; }
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:.85rem; }
+th { background:var(--glow-soft); color:var(--accent2); font-weight:600; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; padding:12px 14px; text-align:left; transition: background .4s ease, color .4s ease; }
+td { padding:13px 14px; border-bottom:1px solid rgba(148,163,184,.07); color:var(--light); vertical-align:middle; }
+tr:hover td { background:var(--glow-soft); }
+.badge {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:600;
+}
+.badge.ok      { background:rgba(16,185,129,.15); color:#34d399; }
+.badge.low     { background:rgba(245,158,11,.15); color:#fbbf24; }
+.badge.expired { background:rgba(244,63,94,.15);  color:#fb7185; }
+
+/* ── FILTER TABS ── */
+.filter-tabs { display:flex; gap:6px; margin-bottom:20px; }
+.filter-tab {
+  padding:7px 16px; border-radius:8px; border:1px solid var(--border);
+  background:transparent; color:var(--muted); cursor:pointer;
+  font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:500;
+  transition: all .18s;
+}
+.filter-tab:hover { border-color:var(--accent); color:var(--accent2); }
+.filter-tab.active { background:var(--glow-soft); border-color:var(--accent); color:var(--accent2); }
+
+/* ── BUTTONS ── */
+.btn {
+  display:inline-flex; align-items:center; gap:7px;
+  padding:9px 18px; border-radius:10px; border:none;
+  cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.85rem; font-weight:600;
+  transition: all .18s;
+}
+.btn-primary { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; box-shadow:0 4px 12px var(--glow); transition: all .3s cubic-bezier(.16,1,.3,1); }
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 22px var(--glow); }
+.btn-danger  { background:rgba(244,63,94,.15); border:1px solid rgba(244,63,94,.3); color:#fb7185; }
+.btn-danger:hover  { background:rgba(244,63,94,.25); }
+.btn-edit    { background:var(--glow-soft); border:1px solid var(--border); color:var(--accent2); }
+.btn-edit:hover    { background:var(--glow); }
+.btn-sm { padding:5px 10px; font-size:.78rem; border-radius:7px; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display:none; position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,.6); backdrop-filter:blur(6px);
+  align-items:center; justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background: var(--slate);
+  border: 1px solid var(--border);
+  border-radius: 20px; width: 460px; max-width: 95vw;
+  padding: 28px;
+  animation: modalIn .25s cubic-bezier(.16,1,.3,1);
+}
+@keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:none} }
+.modal-title { font-family:'DM Serif Display',serif; font-size:1.3rem; margin-bottom:20px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-group.full { grid-column: 1/-1; }
+.form-group label { font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+.form-group input, .form-group select {
+  padding:10px 13px; background:rgba(15,23,42,.6);
+  border:1px solid rgba(148,163,184,.2); border-radius:10px;
+  color:var(--white); font-family:'DM Sans',sans-serif; font-size:.9rem; outline:none;
+  transition: border-color .18s, box-shadow .18s;
+}
+.form-group input:focus, .form-group select:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--glow-soft); }
+.form-group select option { background: var(--slate); color:var(--white); }
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:22px; }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed; bottom:28px; right:28px; z-index:999;
+  background:var(--slate); border:1px solid var(--accent); border-radius:14px;
+  padding:14px 20px; color:var(--white); font-size:.88rem; font-weight:500;
+  display:flex; align-items:center; gap:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+  transform:translateY(80px); opacity:0; transition: all .4s cubic-bezier(.16,1,.3,1);
+  pointer-events:none;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+
+/* ── CHARTS ── */
+canvas { max-height: 220px; }
+
+/* ── EMPTY ── */
+.empty-state { text-align:center; padding:40px 20px; color:var(--muted); }
+.empty-state .empty-icon { font-size:2.5rem; margin-bottom:10px; }
+
+/* ── QUICK ACTIONS ── */
+.quick-actions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+.qa-item {
+  background:var(--glow-soft); border:1px solid var(--border);
+  border-radius:14px; padding:16px; text-align:center; cursor:pointer;
+  transition:all .3s cubic-bezier(.16,1,.3,1);
+}
+.qa-item:hover { background:var(--glow); border-color:var(--accent); transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,.2); }
+.qa-icon { font-size:1.4rem; margin-bottom:5px; }
+.qa-label { font-size:.75rem; color:var(--light); font-weight:500; }
+
+/* scrollbar */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--glow); border-radius:5px; }
+
+/* ── THEME SWITCHER ── */
+.theme-picker {
+  display:flex; align-items:center; gap:6px;
+  padding:10px 14px; margin:0 14px 8px;
+}
+.theme-picker-label { font-size:.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; font-weight:600; margin-right:2px; white-space:nowrap; }
+.tdot {
+  width:20px; height:20px; border-radius:50%;
+  border:2px solid transparent; cursor:pointer;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  position:relative;
+}
+.tdot::before { content:''; position:absolute; inset:3px; border-radius:50%; }
+.tdot:hover { transform:scale(1.2); }
+.tdot.active { border-color:var(--white); }
+.tdot[data-t="teal"]::before   { background:linear-gradient(135deg,#0d9488,#14b8a6); }
+.tdot[data-t="violet"]::before { background:linear-gradient(135deg,#7c3aed,#a78bfa); }
+.tdot[data-t="sunset"]::before { background:linear-gradient(135deg,#ea580c,#f97316); }
+.tdot[data-t="ocean"]::before  { background:linear-gradient(135deg,#0369a1,#0ea5e9); }
+.tdot[data-t="rose"]::before   { background:linear-gradient(135deg,#be185d,#ec4899); }
+.tdot[data-t="emerald"]::before{ background:linear-gradient(135deg,#059669,#10b981); }
+
+/* ── WELCOME BANNER ── */
+.welcome-banner {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius:18px; padding:28px 32px; margin-bottom:24px;
+  position:relative; overflow:hidden;
+  transition: background .4s ease;
+}
+.welcome-banner::before {
+  content:''; position:absolute; top:-50%; right:-20%; width:300px; height:300px;
+  background:rgba(255,255,255,.08); border-radius:50%;
+}
+.welcome-banner::after {
+  content:''; position:absolute; bottom:-30%; left:60%; width:200px; height:200px;
+  background:rgba(255,255,255,.05); border-radius:50%;
+}
+.wb-title { font-family:'DM Serif Display',serif; font-size:1.5rem; color:#fff; margin-bottom:4px; position:relative; z-index:1; }
+.wb-sub { font-size:.85rem; color:rgba(255,255,255,.75); position:relative; z-index:1; }
+.wb-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,.15); backdrop-filter:blur(6px); border-radius:20px; padding:4px 12px; font-size:.72rem; color:#fff; font-weight:600; margin-top:10px; position:relative; z-index:1; }
+
+/* ═══ CHATBOT ═══ */
+.chat-fab {
+  position:fixed; bottom:28px; right:28px; z-index:500;
+  width:58px; height:58px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none; cursor:pointer; color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 6px 24px var(--glow), 0 0 0 0 var(--glow);
+  transition:all .3s cubic-bezier(.16,1,.3,1);
+  animation: fabPulse 3s ease-in-out infinite;
+}
+.chat-fab:hover { transform:scale(1.08); box-shadow:0 8px 32px var(--glow); }
+.chat-fab.active { transform:rotate(45deg) scale(1.05); animation:none; }
+.chat-fab svg { width:26px; height:26px; transition: transform .3s; }
+@keyframes fabPulse {
+  0%,100% { box-shadow:0 6px 24px var(--glow), 0 0 0 0 var(--glow); }
+  50% { box-shadow:0 6px 24px var(--glow), 0 0 0 12px transparent; }
+}
+
+.chat-panel {
+  position:fixed; bottom:100px; right:28px; z-index:500;
+  width:400px; max-height:560px;
+  background:var(--slate);
+  border:1px solid var(--border);
+  border-radius:22px;
+  display:flex; flex-direction:column;
+  box-shadow:0 20px 60px rgba(0,0,0,.5), 0 0 40px var(--glow-soft);
+  backdrop-filter:blur(20px);
+  transform:translateY(20px) scale(.95); opacity:0;
+  pointer-events:none;
+  transition:all .35s cubic-bezier(.16,1,.3,1);
+}
+.chat-panel.open {
+  transform:translateY(0) scale(1); opacity:1;
+  pointer-events:all;
+}
+
+.chat-head {
+  padding:18px 20px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:22px 22px 0 0;
+  position:relative; overflow:hidden;
+}
+.chat-head::after {
+  content:''; position:absolute; top:-30px; right:-20px;
+  width:100px; height:100px; background:rgba(255,255,255,.08);
+  border-radius:50%;
+}
+.chat-avatar {
+  width:40px; height:40px; border-radius:12px;
+  background:rgba(255,255,255,.2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; flex-shrink:0; position:relative; z-index:1;
+}
+.chat-head-info { position:relative; z-index:1; }
+.chat-head-name { font-weight:700; font-size:.95rem; color:#fff; }
+.chat-head-status { font-size:.7rem; color:rgba(255,255,255,.7); display:flex; align-items:center; gap:5px; }
+.chat-online-dot { width:6px; height:6px; border-radius:50%; background:#4ade80; box-shadow:0 0 6px #4ade80; }
+
+.chat-body {
+  flex:1; overflow-y:auto; padding:16px;
+  display:flex; flex-direction:column; gap:12px;
+  min-height:280px; max-height:360px;
+}
+
+.chat-msg {
+  max-width:85%; padding:12px 16px;
+  font-size:.84rem; line-height:1.5;
+  animation:msgIn .3s cubic-bezier(.16,1,.3,1) both;
+  word-wrap:break-word;
+}
+@keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+.chat-msg.bot {
+  background:var(--glow-soft);
+  border:1px solid var(--border);
+  border-radius:4px 16px 16px 16px;
+  color:var(--white);
+  align-self:flex-start;
+}
+.chat-msg.user {
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:16px 4px 16px 16px;
+  color:#fff;
+  align-self:flex-end;
+}
+.chat-msg strong, .chat-msg b { color:var(--accent3); }
+.chat-msg.user strong, .chat-msg.user b { color:#fff; }
+
+.chat-typing {
+  display:flex; gap:4px; padding:12px 16px;
+  align-self:flex-start;
+}
+.chat-typing span {
+  width:8px; height:8px; border-radius:50%;
+  background:var(--accent2); opacity:.4;
+  animation:typing 1.2s ease-in-out infinite;
+}
+.chat-typing span:nth-child(2) { animation-delay:.15s; }
+.chat-typing span:nth-child(3) { animation-delay:.3s; }
+@keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-6px);opacity:1} }
+
+.chat-chips {
+  display:flex; flex-wrap:wrap; gap:6px; padding:0 16px 10px;
+}
+.chat-chip {
+  padding:6px 12px; border-radius:20px; font-size:.72rem;
+  background:var(--glow-soft); border:1px solid var(--border);
+  color:var(--accent2); cursor:pointer; font-weight:500;
+  transition:all .2s;
+}
+.chat-chip:hover { background:var(--glow); border-color:var(--accent); }
+
+.chat-input-area {
+  padding:12px 16px;
+  border-top:1px solid var(--border);
+  display:flex; gap:8px; align-items:center;
+}
+.chat-input-area input {
+  flex:1; padding:10px 14px;
+  background:var(--navy); border:1px solid var(--border);
+  border-radius:12px; color:var(--white);
+  font-family:'Inter',sans-serif; font-size:.85rem;
+  outline:none; transition:border-color .2s, box-shadow .2s;
+}
+.chat-input-area input::placeholder { color:var(--muted); }
+.chat-input-area input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--glow-soft); }
+
+.chat-send {
+  width:38px; height:38px; border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none; cursor:pointer; color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .2s;
+  flex-shrink:0;
+}
+.chat-send:hover { transform:scale(1.05); box-shadow:0 4px 12px var(--glow); }
+.chat-send:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+.chat-send svg { width:18px; height:18px; }
+
+@media (max-width:520px) {
+  .chat-panel { width:calc(100% - 24px); right:12px; bottom:90px; }
+  .chat-fab { bottom:16px; right:16px; width:52px; height:52px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon-sm">🏥</div>
+    <div class="logo-text">Code<span>Cure</span></div>
+  </div>
+  <div class="sidebar-user">
+    <div class="u-role">{{ role }}</div>
+    <div class="u-name">{{ user }}</div>
+  </div>
+  <nav>
+    <div class="nav-section">Main Menu</div>
+    <div class="nav-item active" onclick="showSection('dashboard', this)">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showSection('inventory', this)">
+      <span class="nav-icon">💊</span> Inventory
+    </div>
+    <div class="nav-item" id="alerts-nav" onclick="showSection('alerts', this)">
+      <span class="nav-icon">🔔</span> Alerts
+      <span class="nav-badge" id="alert-count">…</span>
+    </div>
+    <div class="nav-section">Analytics</div>
+    <div class="nav-item" onclick="showSection('reports', this)">
+      <span class="nav-icon">📈</span> Reports
+    </div>
+    <div class="nav-section">Appearance</div>
+    <div class="theme-picker">
+      <span class="theme-picker-label">Theme</span>
+      <div class="tdot active" data-t="teal" onclick="setTheme('teal')" title="Teal Surge"></div>
+      <div class="tdot" data-t="violet" onclick="setTheme('violet')" title="Violet Nebula"></div>
+      <div class="tdot" data-t="sunset" onclick="setTheme('sunset')" title="Sunset Blaze"></div>
+      <div class="tdot" data-t="ocean" onclick="setTheme('ocean')" title="Ocean Depths"></div>
+      <div class="tdot" data-t="rose" onclick="setTheme('rose')" title="Rose Gold"></div>
+      <div class="tdot" data-t="emerald" onclick="setTheme('emerald')" title="Emerald Forest"></div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <a class="btn-logout" href="/logout">🚪 Logout</a>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- topbar -->
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-right">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="topbar-alert-dot" id="alert-dot" style="display:none"></div>
+      {% if role in ['Admin', 'Pharmacist'] %}
+      <button class="btn btn-primary" onclick="openModal()">＋ Add Medicine</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── DASHBOARD SECTION ── -->
+    <div class="section active" id="sec-dashboard">
+
+      <div class="welcome-banner">
+        <div class="wb-title">Welcome back, {{ user|capitalize }}! 👋</div>
+        <div class="wb-sub">Here’s your Smart Medical Inventory overview for today.</div>
+        <div class="wb-badge">🏥 Smart Medical Inventory Management System</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card total">
+          <div class="stat-icon">📦</div>
+          <div class="stat-num" id="s-total">—</div>
+          <div class="stat-label">Total Medicines</div>
+          <div class="stat-sub">All registered items</div>
+        </div>
+        <div class="stat-card ok">
+          <div class="stat-icon">✅</div>
+          <div class="stat-num" id="s-ok">—</div>
+          <div class="stat-label">In Stock</div>
+          <div class="stat-sub">Sufficient supply</div>
+        </div>
+        <div class="stat-card low">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-num" id="s-low">—</div>
+          <div class="stat-label">Low Stock</div>
+          <div class="stat-sub">Needs reorder</div>
+        </div>
+        <div class="stat-card exp">
+          <div class="stat-icon">🚨</div>
+          <div class="stat-num" id="s-exp">—</div>
+          <div class="stat-label">Expired / Soon</div>
+          <div class="stat-sub">Immediate action needed</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <!-- Quick actions -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚡ Quick Actions</div></div>
+          <div class="card-body">
+            <div class="quick-actions">
+              {% if role in ['Admin','Pharmacist'] %}
+              <div class="qa-item" onclick="openModal()"><div class="qa-icon">➕</div><div class="qa-label">Add Medicine</div></div>
+              {% endif %}
+              <div class="qa-item" onclick="showSection('alerts', document.querySelector('[onclick*=alerts]'))"><div class="qa-icon">🔔</div><div class="qa-label">View Alerts</div></div>
+              <div class="qa-item" onclick="showSection('inventory', document.querySelectorAll('.nav-item')[1])"><div class="qa-icon">🔍</div><div class="qa-label">Search Stock</div></div>
+              <div class="qa-item" onclick="showSection('reports', document.querySelectorAll('.nav-item')[3])"><div class="qa-icon">📊</div><div class="qa-label">Reports</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Urgent alerts preview -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🚨 Urgent Alerts</div>
+          </div>
+          <div class="card-body" id="dash-alerts" style="max-height:180px;overflow-y:auto;">
+            <div class="empty-state"><div class="empty-icon">✅</div>All clear!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <!-- category chart -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Stock by Category</div></div>
+          <div class="card-body"><canvas id="catChart"></canvas></div>
+        </div>
+        <!-- recent activity -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">🕐 Recent Activity</div></div>
+          <div class="card-body" id="dash-activity" style="max-height:240px;overflow-y:auto;"></div>
+        </div>
+      </div>
+
+    </div><!-- /dashboard -->
+
+    <!-- ── INVENTORY SECTION ── -->
+    <div class="section" id="sec-inventory">
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="loadMedicines('all',this)">All</button>
+        <button class="filter-tab" onclick="loadMedicines('low',this)">⚠️ Low Stock</button>
+        <button class="filter-tab" onclick="loadMedicines('expiring',this)">⏳ Expiring Soon</button>
+        <button class="filter-tab" onclick="loadMedicines('expired',this)">🚨 Expired</button>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Medicine Name</th><th>Category</th>
+                <th>Quantity</th><th>Expiry</th><th>Supplier</th>
+                <th>Price (₹)</th><th>Status</th>
+                {% if role in ['Admin','Pharmacist'] %}<th>Actions</th>{% endif %}
+              </tr>
+            </thead>
+            <tbody id="med-tbody">
+              <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ALERTS SECTION ── -->
+    <div class="section" id="sec-alerts">
+      <div class="card">
+        <div class="card-header"><div class="card-title">⚠️ All Active Alerts</div></div>
+        <div class="card-body" id="all-alerts"></div>
+      </div>
+    </div>
+
+    <!-- ── REPORTS SECTION ── -->
+    <div class="section" id="sec-reports">
+      <div class="grid2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Quantity by Category</div></div>
+          <div class="card-body"><canvas id="rptCatChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🥧 Stock Status</div></div>
+          <div class="card-body"><canvas id="rptStatusChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ═══ MODAL ═══ -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">➕ Add New Medicine</div>
+    <input type="hidden" id="edit-id"/>
+    <div class="form-grid">
+      <div class="form-group full"><label>Medicine Name *</label><input id="f-name" placeholder="e.g. Paracetamol 500mg"/></div>
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="f-cat">
+          <option value="">Select…</option>
+          <option>Analgesic</option><option>Antibiotic</option><option>Antacid</option>
+          <option>Antihistamine</option><option>Antidiabetic</option><option>Statin</option>
+          <option>Vitamin</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Unit</label>
+        <select id="f-unit"><option>Tablets</option><option>Capsules</option><option>Syrup (ml)</option><option>Injection</option><option>Drops</option></select>
+      </div>
+      <div class="form-group"><label>Quantity *</label><input id="f-qty" type="number" min="0" placeholder="0"/></div>
+      <div class="form-group"><label>Min Stock Alert</label><input id="f-min" type="number" min="0" placeholder="10"/></div>
+      <div class="form-group"><label>Expiry Date *</label><input id="f-exp" type="date"/></div>
+      <div class="form-group"><label>Supplier</label><input id="f-sup" placeholder="Supplier name"/></div>
+      <div class="form-group"><label>Price per unit (₹)</label><input id="f-price" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMedicine()">💾 Save Medicine</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CHATBOT ═══ -->
+<button class="chat-fab" id="chat-fab" onclick="toggleChat()" title="MediBot Assistant">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+</button>
+
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-head">
+    <div class="chat-avatar">🤖</div>
+    <div class="chat-head-info">
+      <div class="chat-head-name">MediBot Assistant</div>
+      <div class="chat-head-status"><span class="chat-online-dot"></span> Online — Ready to help</div>
+    </div>
+  </div>
+  <div class="chat-body" id="chat-body">
+    <div class="chat-msg bot">
+      👋 Hi <strong>{{ user|capitalize }}</strong>! I'm <strong>MediBot</strong>, your Smart Medical Inventory Assistant.<br><br>
+      I can help with stock status, medicine info, dosage guidance, alerts & more. Try asking me something!
+    </div>
+  </div>
+  <div class="chat-chips" id="chat-chips">
+    <div class="chat-chip" onclick="sendQuick('stock status')">📦 Stock Status</div>
+    <div class="chat-chip" onclick="sendQuick('low stock')">⚠️ Low Stock</div>
+    <div class="chat-chip" onclick="sendQuick('expired')">🚨 Expired</div>
+    <div class="chat-chip" onclick="sendQuick('tip')">💡 Get a Tip</div>
+    <div class="chat-chip" onclick="sendQuick('help')">❓ Help</div>
+  </div>
+  <div class="chat-input-area">
+    <input id="chat-input" type="text" placeholder="Ask MediBot anything..." autocomplete="off"/>
+    <button class="chat-send" id="chat-send" onclick="sendChat()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ Done!</div>
+
+<script>
+const ROLE = "{{ role }}";
+
+// ── THEME MANAGEMENT ──
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('codecure-theme', theme);
+  document.querySelectorAll('.tdot').forEach(d => {
+    d.classList.toggle('active', d.dataset.t === theme);
+  });
+  // Rebuild charts with new colors
+  loadCategoryChart();
+  if(document.getElementById('sec-reports').classList.contains('active')) loadReports();
+}
+// Restore saved theme on load
+(function() {
+  const saved = localStorage.getItem('codecure-theme');
+  if (saved) setTheme(saved);
+})();
+
+function getThemeChartColors() {
+  const s = getComputedStyle(document.documentElement);
+  return [
+    s.getPropertyValue('--accent').trim(),
+    s.getPropertyValue('--accent2').trim(),
+    s.getPropertyValue('--accent3').trim(),
+    '#f59e0b','#f43f5e','#818cf8','#34d399','#a78bfa'
+  ];
+}
+
+// ── CLOCK ──
+function tickClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-IN');
+}
+setInterval(tickClock, 1000); tickClock();
+
+// ── SECTION NAV ──
+function showSection(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  if(el) el.classList.add('active');
+  document.getElementById('page-title').textContent =
+    {dashboard:'Dashboard',inventory:'Inventory Management',alerts:'Active Alerts',reports:'Reports & Analytics'}[name];
+  if(name==='inventory') loadMedicines('all', document.querySelector('.filter-tab'));
+  if(name==='alerts')    loadAlerts();
+  if(name==='reports')   loadReports();
+}
+
+// ── STATS ──
+async function loadStats() {
+  const r = await fetch('/api/stats'); const d = await r.json();
+  document.getElementById('s-total').textContent = d.total;
+  document.getElementById('s-ok').textContent    = d.ok;
+  document.getElementById('s-low').textContent   = d.low;
+  document.getElementById('s-exp').textContent   = d.expired;
+}
+
+// ── ALERTS ──
+async function loadDashAlerts() {
+  const r = await fetch('/api/alerts'); const alerts = await r.json();
+  const cnt = alerts.length;
+  document.getElementById('alert-count').textContent = cnt;
+  const dot = document.getElementById('alert-dot');
+  dot.style.display = cnt ? 'block' : 'none';
+
+  const el = document.getElementById('dash-alerts');
+  if(!cnt){ el.innerHTML='<div class="empty-state"><div class="empty-icon">✅</div>No alerts right now</div>'; return; }
+  el.innerHTML = alerts.slice(0,4).map(a => `
+    <div class="alert-item ${a.type}">
+      <div class="alert-dot"></div>
+      <div><div class="alert-name">${a.name}</div><div class="alert-detail">${a.detail}</div></div>
+    </div>`).join('');
+}
+async function loadAlerts() {
+  const r = await fetch('/api/alerts'); const alerts = await r.json();
+  const el = document.getElementById('all-alerts');
+  if(!alerts.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">✅</div>No active alerts!</div>'; return; }
+  el.innerHTML = alerts.map(a=>`
+    <div class="alert-item ${a.type}" style="margin-bottom:10px">
+      <div class="alert-dot"></div>
+      <div><div class="alert-name">${a.name}</div><div class="alert-detail">${a.detail}</div></div>
+    </div>`).join('');
+}
+
+// ── ACTIVITY ──
+async function loadActivity() {
+  const r = await fetch('/api/activity'); const acts = await r.json();
+  const icons = {'Login':'🔑','Logout':'🚪','Add Medicine':'➕','Edit Medicine':'✏️','Delete Medicine':'🗑️','System Init':'⚙️'};
+  document.getElementById('dash-activity').innerHTML = acts.slice(0,8).map(a=>`
+    <div class="activity-item">
+      <div class="act-icon">${icons[a.action]||'📋'}</div>
+      <div><div class="act-action">${a.action}</div><div class="act-detail">${a.detail}</div></div>
+      <div class="act-time">${a.timestamp ? a.timestamp.split(' ')[1]||'' : ''}</div>
+    </div>`).join('');
+}
+
+// ── INVENTORY TABLE ──
+async function loadMedicines(filter, tabEl) {
+  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+  if(tabEl) tabEl.classList.add('active');
+  const r = await fetch('/api/medicines?filter='+filter);
+  const meds = await r.json();
+  const today = new Date().toISOString().split('T')[0];
+  const canEdit = ROLE==='Admin'||ROLE==='Pharmacist';
+  const canDel  = ROLE==='Admin';
+
+  if(!meds.length){
+    document.getElementById('med-tbody').innerHTML=
+      `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px">No medicines found</td></tr>`;
+    return;
+  }
+  document.getElementById('med-tbody').innerHTML = meds.map((m,i)=>{
+    let status='ok', label='✅ OK';
+    if(m.expiry_date && m.expiry_date <= today){ status='expired'; label='🚨 Expired'; }
+    else if(m.quantity < m.min_stock){ status='low'; label='⚠️ Low'; }
+    return `<tr>
+      <td>${i+1}</td>
+      <td style="font-weight:600;color:var(--white)">${m.name}</td>
+      <td>${m.category||'—'}</td>
+      <td>${m.quantity}</td>
+      <td>${m.expiry_date||'—'}</td>
+      <td>${m.supplier||'—'}</td>
+      <td>₹${parseFloat(m.price||0).toFixed(2)}</td>
+      <td><span class="badge ${status}">${label}</span></td>
+      ${canEdit?`<td>
+        <button class="btn btn-edit btn-sm" onclick='openEdit(${JSON.stringify(m)})'>✏️</button>
+        ${canDel?`<button class="btn btn-danger btn-sm" onclick="delMed(${m.id},'${m.name.replace(/'/g,"\\'")}')">🗑️</button>`:''}
+      </td>`:''}
+    </tr>`;
+  }).join('');
+}
+
+// ── CHART ──
+let catChart, rptCatChart, rptStatusChart;
+async function loadCategoryChart() {
+  const r = await fetch('/api/chart/category'); const data = await r.json();
+  const labels = data.map(d=>d.category||'Other');
+  const vals   = data.map(d=>d.total);
+  const colors = getThemeChartColors();
+
+  if(catChart) catChart.destroy();
+  catChart = new Chart(document.getElementById('catChart'), {
+    type:'bar',
+    data:{ labels, datasets:[{data:vals, backgroundColor:colors.slice(0,labels.length), borderRadius:10, borderSkipped:false}] },
+    options:{ plugins:{legend:{display:false}}, scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#94a3b8'}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#94a3b8'}}}, responsive:true }
+  });
+}
+async function loadReports() {
+  const [cr, sr] = await Promise.all([fetch('/api/chart/category'), fetch('/api/stats')]);
+  const catData = await cr.json(); const stats = await sr.json();
+  const labels = catData.map(d=>d.category||'Other');
+  const vals   = catData.map(d=>d.total);
+  const colors = getThemeChartColors();
+
+  if(rptCatChart) rptCatChart.destroy();
+  rptCatChart = new Chart(document.getElementById('rptCatChart'), {
+    type:'bar', data:{ labels, datasets:[{data:vals, backgroundColor:colors.slice(0,labels.length), borderRadius:10, borderSkipped:false}] },
+    options:{ plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,.04)'}}}, responsive:true }
+  });
+
+  if(rptStatusChart) rptStatusChart.destroy();
+  rptStatusChart = new Chart(document.getElementById('rptStatusChart'), {
+    type:'doughnut',
+    data:{ labels:['OK','Low Stock','Expired'], datasets:[{data:[stats.ok, stats.low, stats.expired], backgroundColor:['#10b981','#f59e0b','#f43f5e'], borderWidth:0, hoverOffset:8}] },
+    options:{ plugins:{legend:{labels:{color:'#94a3b8'}}}, responsive:true, cutout:'65%' }
+  });
+}
+
+// ── MODAL ──
+function openModal() {
+  document.getElementById('modal-title').textContent = '➕ Add New Medicine';
+  document.getElementById('edit-id').value = '';
+  ['f-name','f-qty','f-min','f-exp','f-sup','f-price'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('f-cat').value='';
+  document.getElementById('modal').classList.add('open');
+}
+function openEdit(m) {
+  document.getElementById('modal-title').textContent = '✏️ Edit Medicine';
+  document.getElementById('edit-id').value = m.id;
+  document.getElementById('f-name').value  = m.name;
+  document.getElementById('f-cat').value   = m.category||'';
+  document.getElementById('f-qty').value   = m.quantity;
+  document.getElementById('f-min').value   = m.min_stock;
+  document.getElementById('f-exp').value   = m.expiry_date||'';
+  document.getElementById('f-sup').value   = m.supplier||'';
+  document.getElementById('f-price').value = m.price||0;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => { if(e.target===document.getElementById('modal')) closeModal(); });
+
+async function saveMedicine() {
+  const name = document.getElementById('f-name').value.trim();
+  if(!name){ showToast('❌ Medicine name is required','var(--red)'); return; }
+  const id = document.getElementById('edit-id').value;
+  const body = {
+    name, category: document.getElementById('f-cat').value,
+    quantity: document.getElementById('f-qty').value||0,
+    min_stock: document.getElementById('f-min').value||10,
+    expiry_date: document.getElementById('f-exp').value,
+    supplier: document.getElementById('f-sup').value,
+    price: document.getElementById('f-price').value||0,
+  };
+  const url = id ? `/api/medicines/${id}` : '/api/medicines';
+  const method = id ? 'PUT' : 'POST';
+  const r = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const d = await r.json();
+  if(d.success){
+    closeModal();
+    showToast(id ? '✅ Medicine updated!' : '✅ Medicine added!');
+    loadStats(); loadDashAlerts(); loadCategoryChart();
+    if(document.getElementById('sec-inventory').classList.contains('active')) loadMedicines('all');
+  } else { showToast('❌ '+(d.error||'Error'),'var(--red)'); }
+}
+
+async function delMed(id, name) {
+  if(!confirm(`Delete "${name}"?`)) return;
+  const r = await fetch(`/api/medicines/${id}`, {method:'DELETE'});
+  const d = await r.json();
+  if(d.success){ showToast('🗑️ Deleted: '+name); loadMedicines('all'); loadStats(); loadDashAlerts(); }
+  else showToast('❌ '+(d.error||'Error'),'var(--red)');
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, color='var(--teal)') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.borderColor = color;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── CHATBOT ──
+let chatOpen = false;
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById('chat-panel').classList.toggle('open', chatOpen);
+  document.getElementById('chat-fab').classList.toggle('active', chatOpen);
+  if (chatOpen) {
+    setTimeout(() => document.getElementById('chat-input').focus(), 350);
+  }
+}
+
+function addChatMsg(text, type) {
+  const body = document.getElementById('chat-body');
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + type;
+  // Simple markdown-like formatting for bold **text**
+  let formatted = text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+  div.innerHTML = formatted;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+function showTyping() {
+  const body = document.getElementById('chat-body');
+  const div = document.createElement('div');
+  div.className = 'chat-typing';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+  addChatMsg(msg, 'user');
+
+  // Show typing indicator
+  showTyping();
+  document.getElementById('chat-send').disabled = true;
+
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    });
+    const data = await r.json();
+    // Simulate slight delay for natural feel
+    setTimeout(() => {
+      removeTyping();
+      addChatMsg(data.reply || 'Sorry, something went wrong.', 'bot');
+      document.getElementById('chat-send').disabled = false;
+    }, 400 + Math.random() * 400);
+  } catch (e) {
+    setTimeout(() => {
+      removeTyping();
+      addChatMsg('⚠️ Connection error. Please try again.', 'bot');
+      document.getElementById('chat-send').disabled = false;
+    }, 300);
+  }
+}
+
+function sendQuick(text) {
+  document.getElementById('chat-input').value = text;
+  sendChat();
+}
+
+// Enter key to send
+document.getElementById('chat-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChat();
+  }
+});
+
+// ── INIT ──
+loadStats();
+loadDashAlerts();
+loadActivity();
+loadCategoryChart();
+</script>
+</body>
+</html>
