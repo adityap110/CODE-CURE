@@ -403,150 +403,206 @@ def api_chat():
 def process_chat(msg, user, role):
     import random
 
-    # ── Greetings ──
-    greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "howdy"]
+    # ── Greetings & Casual Talk ──
+    greetings = ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "howdy", "sup", "what's up", "how are you"]
     if any(g in msg for g in greetings):
-        return (f"Hello {user.capitalize()}! 👋 I'm **MediBot**, your Smart Medical Inventory Assistant.\n\n"
-                "I can help you with:\n"
-                "• 📦 **Stock status** — ask about inventory levels\n"
-                "• 💊 **Medicine info** — dosage, side effects, interactions\n"
-                "• ⚠️ **Alerts** — expired or low stock items\n"
-                "• 💡 **Tips** — inventory management best practices\n"
-                "• 🔍 **Search** — find specific medicines\n"
-                "• 📊 **Reports** — stock value & statistics\n\n"
-                "What would you like to know?")
+        responses = [
+            f"Hey {user.capitalize()}! 👋 How's your day going? Need help with anything inventory-related?",
+            f"Hello {user.capitalize()}! 😊 Great to see you! What can I help you with today?",
+            f"Hi there {user.capitalize()}! 🎉 Ready to tackle some inventory tasks?",
+            f"What's up {user.capitalize()}! 👋 How can I assist with your medical inventory?",
+        ]
+        return random.choice(responses)
 
-    # ── Help ──
-    if msg in ["help", "what can you do", "commands", "menu"]:
-        return ("Here's what I can help with:\n\n"
-                "📦 **\"stock status\"** — Overview of your inventory\n"
-                "⚠️ **\"alerts\"** or **\"low stock\"** — Current warnings\n"
-                "💊 **\"info [medicine]\"** — Details about a specific medicine\n"
-                "💊 **\"dosage [medicine]\"** — Dosage guidance\n"
-                "⚠️ **\"interactions [medicine]\"** — Drug interactions\n"
-                "🏥 **\"storage [medicine]\"** — Storage instructions\n"
-                "📋 **\"expired\"** — List expired medicines\n"
-                "💡 **\"tip\"** — Random inventory management tip\n"
-                "📊 **\"summary\"** — Full inventory summary\n"
-                "🔍 **\"search [medicine]\"** — Find a specific medicine")
+    # ── Health Check ──
+    if any(k in msg for k in ["how are you", "how r u", "you okay", "you doing"]):
+        return "I'm doing great! Thanks for asking! 😄 I'm fully operational and ready to help you manage your inventory. How are *you* doing?"
 
-    # ── Stock Status ──
-    if any(k in msg for k in ["stock status", "inventory status", "overview", "summary", "how many", "total"]):
+    # ── Thanks & Appreciation ──
+    if any(k in msg for k in ["thank", "thanks", "appreciate", "thanks mate", "cheers"]):
+        responses = [
+            f"Happy to help, {user.capitalize()}! 🙌 Let me know if you need anything else!",
+            f"Anytime, {user.capitalize()}! 😊 That's what I'm here for!",
+            f"No problem at all! Glad I could assist! 👍",
+            f"My pleasure! Feel free to ask anytime! 🎯",
+        ]
+        return random.choice(responses)
+
+    # ── Goodbye ──
+    if any(k in msg for k in ["bye", "goodbye", "see you", "exit", "quit", "later", "see ya", "take care"]):
+        responses = [
+            f"Goodbye, {user.capitalize()}! 👋 Keep that inventory in perfect shape! 🏥",
+            f"Take care, {user.capitalize()}! See you soon! 👍",
+            f"Catch you later! Stay organized! 🎯",
+            f"See you next time, {user.capitalize()}! Keep up the good work! 💪",
+        ]
+        return random.choice(responses)
+
+    # ── Help & What Can You Do ──
+    if any(k in msg for k in ["help", "what can you do", "commands", "menu", "capabilities", "what do you do", "features"]):
+        return ("I'm **MediBot**, your intelligent medical inventory assistant! 🤖 Here's what I can do:\n\n"
+                "**📊 Inventory & Stock Management:**\n"
+                "• Ask about stock status, low items, or expired medicines\n"
+                "• Search for any medicine in the database\n"
+                "• Get alerts about inventory issues\n\n"
+                "**💊 Medicine Information:**\n"
+                "• Info on dosage, side effects, and interactions\n"
+                "• Storage instructions and best practices\n\n"
+                "**💡 Tips & Guidance:**\n"
+                "• Inventory management best practices\n"
+                "• Pharmaceutical handling tips\n\n"
+                "**Just chat naturally!** Try things like:\n"
+                "• \"How's our stock looking?\"\n"
+                "• \"Do we have paracetamol?\"\n"
+                "• \"Give me a management tip\"\n"
+                "• \"What's expiring soon?\"\n\n"
+                "What would you like to know? 😊")
+
+    # ── Smart Stock Status Detection ──
+    stock_keywords = ["stock", "inventory", "how many", "total", "overview", "status", "how's our", "our stock", "do we have"]
+    if any(k in msg for k in stock_keywords):
         conn = get_db()
         today = date.today().isoformat()
         total = conn.execute("SELECT COUNT(*) FROM medicines").fetchone()[0]
         ok = conn.execute("SELECT COUNT(*) FROM medicines WHERE quantity >= min_stock AND (expiry_date IS NULL OR expiry_date > ?)", (today,)).fetchone()[0]
-        low = conn.execute("SELECT COUNT(*) FROM medicines WHERE quantity < min_stock", ).fetchone()[0]
+        low = conn.execute("SELECT COUNT(*) FROM medicines WHERE quantity < min_stock").fetchone()[0]
         expired = conn.execute("SELECT COUNT(*) FROM medicines WHERE expiry_date <= ?", (today,)).fetchone()[0]
         total_qty = conn.execute("SELECT COALESCE(SUM(quantity),0) FROM medicines").fetchone()[0]
         total_val = conn.execute("SELECT COALESCE(SUM(quantity * price),0) FROM medicines").fetchone()[0]
         conn.close()
-        return (f"📊 **Inventory Summary**\n\n"
-                f"• Total medicines: **{total}** types\n"
-                f"• Total units in stock: **{total_qty}**\n"
-                f"• Estimated value: **₹{total_val:,.2f}**\n"
-                f"• ✅ Healthy stock: **{ok}**\n"
-                f"• ⚠️ Low stock: **{low}**\n"
-                f"• 🚨 Expired: **{expired}**\n\n"
-                f"{'⚠️ *Action needed: Some items require attention!*' if (low+expired) > 0 else '✅ *Everything looks good!*'}")
 
-    # ── Low Stock ──
-    if any(k in msg for k in ["low stock", "running low", "reorder", "shortage"]):
+        summary = (f"**Here's your inventory snapshot:**\n\n"
+                  f"📦 **{total}** medicine types | **{total_qty:,}** total units\n"
+                  f"💰 Estimated value: **₹{total_val:,.2f}**\n\n"
+                  f"✅ **{ok}** items - Good stock levels\n"
+                  f"⚠️ **{low}** items - Running low\n"
+                  f"🚨 **{expired}** items - Expired\n\n")
+
+        if low > 0:
+            summary += f"*You have {low} item(s) that need reordering soon!* 📉"
+        elif expired > 0:
+            summary += f"*{expired} item(s) need to be removed.* ⚠️"
+        else:
+            summary += "*Everything looks great! Keep up the good work!* ✨"
+
+        return summary
+
+    # ── Low Stock Detection ──
+    if any(k in msg for k in ["low", "running low", "reorder", "shortage", "need to order", "out of stock", "almost out"]):
         conn = get_db()
         rows = conn.execute("SELECT name, quantity, min_stock FROM medicines WHERE quantity < min_stock ORDER BY quantity ASC").fetchall()
         conn.close()
         if not rows:
-            return "✅ Great news! All medicines are above minimum stock levels."
-        items = "\n".join(f"• **{r['name']}** — {r['quantity']} left (min: {r['min_stock']})" for r in rows)
-        return f"⚠️ **Low Stock Alert** — {len(rows)} item(s) need reordering:\n\n{items}\n\n💡 *Tip: Contact your suppliers ASAP to avoid stockouts.*"
+            return "✅ Good news! All your medicines are above minimum stock levels. No reordering needed right now!"
+        items = "\n".join(f"• **{r['name']}** — {r['quantity']} left (minimum: {r['min_stock']})" for r in rows)
+        return f"⚠️ **Alert: {len(rows)} item(s) running low:**\n\n{items}\n\n💡 I'd recommend contacting your suppliers to order these ASAP!"
 
-    # ── Expired ──
-    if any(k in msg for k in ["expired", "expiry", "expire"]):
+    # ── Expired Detection ──
+    if any(k in msg for k in ["expired", "expiry", "expire", "old", "outdated", "past date", "gone bad"]):
         conn = get_db()
         today = date.today().isoformat()
         rows = conn.execute("SELECT name, expiry_date FROM medicines WHERE expiry_date <= ? ORDER BY expiry_date ASC", (today,)).fetchall()
         conn.close()
         if not rows:
-            return "✅ No expired medicines found. Your inventory is up to date!"
-        items = "\n".join(f"• **{r['name']}** — expired on {r['expiry_date']}" for r in rows)
-        return f"🚨 **Expired Medicines** — {len(rows)} item(s):\n\n{items}\n\n⚠️ *These should be removed from inventory and disposed of properly following pharmaceutical waste guidelines.*"
+            return "✅ Great! No expired medicines detected. Your inventory is clean and current!"
+        items = "\n".join(f"• **{r['name']}** — Expired {r['expiry_date']}" for r in rows)
+        return f"🚨 **Found {len(rows)} expired item(s):**\n\n{items}\n\n⚠️ These should be safely removed and disposed of according to pharmaceutical guidelines."
 
     # ── Alerts ──
-    if any(k in msg for k in ["alert", "warning", "problem", "issue"]):
+    if any(k in msg for k in ["alert", "warning", "issue", "problem", "what's wrong", "any issues", "anything urgent"]):
         conn = get_db()
         today = date.today().isoformat()
         low = conn.execute("SELECT name, quantity, min_stock FROM medicines WHERE quantity < min_stock").fetchall()
         expired = conn.execute("SELECT name, expiry_date FROM medicines WHERE expiry_date <= ?", (today,)).fetchall()
         conn.close()
         if not low and not expired:
-            return "✅ No active alerts! Everything is running smoothly."
-        parts = ["🔔 **Active Alerts**\n"]
-        if low:
-            parts.append(f"**⚠️ Low Stock ({len(low)}):**")
-            for r in low:
-                parts.append(f"  • {r['name']} — {r['quantity']} left")
-        if expired:
-            parts.append(f"\n**🚨 Expired ({len(expired)}):**")
-            for r in expired:
-                parts.append(f"  • {r['name']} — since {r['expiry_date']}")
-        return "\n".join(parts)
+            return "✅ Everything is looking perfect! No active alerts or issues right now. Your inventory is well-maintained! 🎉"
 
-    # ── Medicine Info ──
+        alerts_text = "🔔 **Here are your current alerts:**\n\n"
+        if low:
+            alerts_text += f"**⚠️ Low Stock ({len(low)} items):**\n"
+            for i, r in enumerate(low[:5], 1):
+                alerts_text += f"  {i}. {r['name']} — {r['quantity']} units left\n"
+            if len(low) > 5:
+                alerts_text += f"  ...and {len(low)-5} more\n"
+        if expired:
+            alerts_text += f"\n**🚨 Expired ({len(expired)} items):**\n"
+            for i, r in enumerate(expired[:5], 1):
+                alerts_text += f"  {i}. {r['name']} (since {r['expiry_date']})\n"
+            if len(expired) > 5:
+                alerts_text += f"  ...and {len(expired)-5} more\n"
+        return alerts_text
+
+    # ── Medicine Info (Natural Queries) ──
+    medicine_queries = ["tell me about", "info on", "what about", "info for", "information", "details"]
+    if any(q in msg for q in medicine_queries):
+        for med_key, med_data in MEDICINE_INFO.items():
+            if med_key in msg:
+                if any(k in msg for k in ["dosage", "dose", "take", "how much"]):
+                    return f"💊 **{med_key.title()} - Dosage Information**\n\n{med_data['dosage']}\n\n⚠️ Always consult with a doctor before making dosage changes."
+                if any(k in msg for k in ["interaction", "mix", "combine", "conflict", "together"]):
+                    return f"⚠️ **{med_key.title()} - Drug Interactions**\n\n{med_data['interactions']}\n\n🏥 Always mention all medications to your healthcare provider."
+                if any(k in msg for k in ["side effect", "adverse", "reaction", "bad effect"]):
+                    return f"⚠️ **{med_key.title()} - Side Effects**\n\n{med_data['side_effects']}\n\n🏥 Contact a doctor if you experience severe reactions."
+                if any(k in msg for k in ["storage", "store", "keep", "temperature", "store how"]):
+                    return f"🏥 **{med_key.title()} - Storage Instructions**\n\n{med_data['storage']}"
+                return (f"💊 **{med_key.title()}** ({med_data['category']})\n\n"
+                        f"**What it's used for:** {med_data['use']}\n"
+                        f"**How to take:** {med_data['dosage']}\n"
+                        f"**Possible side effects:** {med_data['side_effects']}\n"
+                        f"**How to store:** {med_data['storage']}\n"
+                        f"**Drug interactions:** {med_data['interactions']}\n\n"
+                        f"⚠️ *This is for reference only. Always consult a healthcare professional.*")
+
+    # ── Direct Medicine Names ──
     for med_key, med_data in MEDICINE_INFO.items():
         if med_key in msg:
             if any(k in msg for k in ["dosage", "dose", "how much", "how to take"]):
-                return f"💊 **{med_key.title()} — Dosage**\n\n{med_data['dosage']}\n\n⚠️ *Always consult a doctor before adjusting dosage.*"
+                return f"💊 **{med_key.title()} - Dosage**\n\n{med_data['dosage']}\n\n⚠️ Always consult a doctor before adjusting doses."
             if any(k in msg for k in ["interaction", "mix", "combine", "conflict"]):
-                return f"⚠️ **{med_key.title()} — Drug Interactions**\n\n{med_data['interactions']}\n\n🏥 *Always inform your doctor about all medications you take.*"
+                return f"⚠️ **{med_key.title()} - Interactions**\n\n{med_data['interactions']}\n\n🏥 Keep your doctor informed about all meds."
             if any(k in msg for k in ["side effect", "adverse", "reaction"]):
-                return f"⚠️ **{med_key.title()} — Side Effects**\n\n{med_data['side_effects']}\n\n🏥 *Report any severe reactions to a healthcare provider immediately.*"
+                return f"⚠️ **{med_key.title()} - Side Effects**\n\n{med_data['side_effects']}\n\n🏥 Report severe reactions immediately."
             if any(k in msg for k in ["storage", "store", "keep", "temperature"]):
-                return f"🏥 **{med_key.title()} — Storage**\n\n{med_data['storage']}"
-            # General info
+                return f"🏥 **{med_key.title()} - Storage**\n\n{med_data['storage']}"
             return (f"💊 **{med_key.title()}** ({med_data['category']})\n\n"
-                    f"**Use:** {med_data['use']}\n"
+                    f"**Used for:** {med_data['use']}\n"
                     f"**Dosage:** {med_data['dosage']}\n"
-                    f"**Side Effects:** {med_data['side_effects']}\n"
+                    f"**Side effects:** {med_data['side_effects']}\n"
                     f"**Storage:** {med_data['storage']}\n"
                     f"**Interactions:** {med_data['interactions']}\n\n"
-                    f"⚠️ *This is for reference only. Always consult a healthcare professional.*")
+                    f"⚠️ *For reference only. Always consult a professional.*")
 
-    # ── Search Medicine ──
-    if any(k in msg for k in ["search", "find", "look up", "check", "available", "have", "stock"]):
-        search_term = msg.replace("search", "").replace("find", "").replace("look up", "").replace("check", "").replace("available", "").replace("have", "").replace("stock", "").strip()
-        if search_term:
+    # ── Smart Search ──
+    search_keywords = ["search", "find", "look for", "do we have", "do we stock", "check if", "is there", "available", "have any"]
+    if any(k in msg for k in search_keywords):
+        search_term = msg
+        for k in search_keywords:
+            search_term = search_term.replace(k, "").strip()
+        search_term = search_term.replace("?", "").replace("a ", "").replace("any ", "").strip()
+
+        if len(search_term) > 1:
             conn = get_db()
             rows = conn.execute("SELECT name, quantity, expiry_date, category FROM medicines WHERE LOWER(name) LIKE ?", (f"%{search_term}%",)).fetchall()
             conn.close()
             if rows:
-                items = "\n".join(f"• **{r['name']}** — Qty: {r['quantity']}, Exp: {r['expiry_date'] or 'N/A'}, Cat: {r['category']}" for r in rows)
-                return f"🔍 **Search Results for \"{search_term}\":**\n\n{items}"
-            return f"🔍 No medicines found matching \"{search_term}\". Try a different term."
+                results = "\n".join(f"• **{r['name']}** — {r['quantity']} units, expires {r['expiry_date'] or 'N/A'} ({r['category']})" for r in rows)
+                return f"✅ **Found {len(rows)} result(s) for \"{search_term}\":**\n\n{results}"
+            else:
+                return f"🔍 No medicines found matching \"{search_term}\". Try a different name or ask me about a medicine we do have!"
 
-    # ── Tips ──
-    if any(k in msg for k in ["tip", "advice", "suggest", "best practice", "recommendation"]):
-        import random
-        return random.choice(GENERAL_TIPS) + "\n\n*Ask for another tip anytime!*"
+    # ── Tips & Best Practices ──
+    if any(k in msg for k in ["tip", "advice", "suggest", "best practice", "recommendation", "how should", "how to", "best way"]):
+        tip = random.choice(GENERAL_TIPS)
+        return f"{tip}\n\n💡 Need another tip? Just ask!"
 
-    # ── Thank You ──
-    if any(k in msg for k in ["thank", "thanks", "appreciate"]):
-        return f"You're welcome, {user.capitalize()}! 😊 I'm always here to help. Feel free to ask anything else!"
-
-    # ── Bye ──
-    if any(k in msg for k in ["bye", "goodbye", "see you", "exit", "quit"]):
-        return f"Goodbye, {user.capitalize()}! 👋 Stay healthy and keep your inventory in check! 🏥"
-
-    # ── Fallback ──
-    return ("I'm not sure I understand that. Here are some things you can ask me:\n\n"
-            "• **\"stock status\"** — inventory overview\n"
-            "• **\"low stock\"** — items running low\n"
-            "• **\"expired\"** — expired medicines\n"
-            "• **\"info paracetamol\"** — medicine details\n"
-            "• **\"dosage amoxicillin\"** — dosage info\n"
-            "• **\"interactions metformin\"** — drug interactions\n"
-            "• **\"tip\"** — management best practice\n"
-            "• **\"search aspirin\"** — find a medicine\n"
-            "• **\"help\"** — full command list")
+    # ── Fallback with Personality ──
+    fallback_responses = [
+        f"Hmm, I'm not quite sure what you mean! 🤔 I'm specifically trained to help with medical inventory.\nTry asking about:\n• Stock levels\n• Expired medicines\n• Medicine info\n• Search for medicines\n\nOr ask \"help\" for options! 😊",
+        f"I didn't catch that! 👂 I'm here for inventory management. Stock check? Medicine details? Low stock alerts?",
+        f"Not sure about that! 🤷 I can help with:\n✅ Inventory management\n✅ Medicine info\n✅ Stock alerts\n✅ Expiry tracking\n\nWhat would you like?",
+    ]
+    return random.choice(fallback_responses)
 
 
 # ─── MAIN ──────────────────────────────────────────────────────────────────────
