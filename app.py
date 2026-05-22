@@ -494,11 +494,6 @@ def api_checkout():
 @app.route("/api/export/csv")
 @login_required
 def api_export_csv():
-    conn = get_db()
-    rows = conn.execute("""
-@app.route("/api/export/csv")
-@login_required
-def api_export_csv():
     db = get_db()
     rows = list(db.medicines.find().sort("name", 1))
     import io, csv
@@ -672,7 +667,7 @@ def api_chat():
 The user you are talking to is {user.capitalize()}, who is a {role}.
 You must be helpful, professional, and highly conversational. Use emojis naturally and format responses in Markdown.
 
-Here is the exact real-time state of the hospital's database right now:
+Here is the exact real-time state of the hospital database right now:
 {inventory_context}
 
 DOCTOR DIRECTORY:
@@ -709,25 +704,19 @@ def api_consult():
     severity = body.get("severity", "mild").lower()
     detail = sanitize(body.get("detail", ""))
     if not symptoms:
-        return jsonify({"reply": "Please describe your symptoms so I can help you better. 🩺"})
+        return jsonify({"reply": "Please describe your symptoms so I can help you better."})
     try:
-        prompt = f"""You are MediBot's specialized Medical AI. 
-A patient is reporting the following primary symptoms: {symptoms}
-Severity level: {severity.upper()}
-Additional details from patient: {detail}
-
-Analyze the symptoms and provide:
-1. Potential mild causes (include disclaimer that you are an AI)
-2. Home care tips & Do's and Don'ts
-3. When to strictly see a doctor
-4. Recommend Dr. Rajesh Sharma (Gen. Physician) or Dr. Priya Nair (Cardiologist) or Dr. Amit Verma (Pediatrician) or Dr. Sunita Rao (Orthopedic) depending on the symptom.
-
-If severity is SEVERE, immediately output an emergency warning urging them to call 108 or go to Olympus Hospital explicitly, in large bold text.
-Always use Markdown and nice formatting. Be highly empathetic."""
+        prompt = ("You are a specialized Medical AI by MediBot. "
+                  f"A patient is reporting symptoms: {symptoms} "
+                  f"Severity: {severity.upper()} "
+                  f"Details: {detail} "
+                  "Provide: 1. Potential causes 2. Home care tips 3. When to see doctor "
+                  "4. Recommend appropriate doctor. "
+                  "Always be empathetic and professional.")
         response = gemini_model.generate_content(prompt)
         return jsonify({"reply": response.text})
     except Exception as e:
-        return jsonify({"reply": f"🩺 Sorry, consultation service is currently unavailable. Error: {str(e)}"})
+        return jsonify({"reply": f"Sorry, consultation service unavailable. Error: {str(e)}"})
 
 # ─── MAIN ──────────────────────────────────────────────────────────────────────
 
