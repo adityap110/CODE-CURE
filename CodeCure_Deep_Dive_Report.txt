@@ -1,0 +1,123 @@
+================================================================================
+                    CODECURE — DEEP DIVE TECHNICAL AUDIT
+================================================================================
+
+1. PROJECT ARCHITECTURE & FILE SYSTEM
+--------------------------------------------------------------------------------
+- [Root Directory]
+  - app.py            : Core Flask backend, API logic, and AI integration.
+  - wsgi.py           : Entry point for Gunicorn (production server).
+  - codecure.db       : SQLite database (Auto-initialized on startup).
+  - requirements.txt  : Python dependencies (Flask, Gunicorn, Gemini API, etc.).
+  - app.yaml          : Configuration for Google App Engine.
+  - render.yaml       : Configuration for Render deployment.
+  - DEPLOYMENT.md     : Comprehensive guide for cloud hosting.
+  - static/           : Public assets.
+    - manifest.json   : PWA configuration (Icons, Theme colors).
+    - service-worker.js: Offline caching and resource management.
+  - templates/        : Jinja2 HTML templates.
+    - index.html      : The main Dashboard/Inventory/POS single-page app.
+    - login.html      : High-fidelity entry point with 3D effects.
+
+2. DATABASE ARCHITECTURE (SQLite)
+--------------------------------------------------------------------------------
+* Table: `medicines`
+  - id          : INTEGER (Primary Key)
+  - name        : TEXT (Required, max 255 chars)
+  - category    : TEXT (Analgesic, Antibiotic, etc.)
+  - quantity    : INTEGER (Current stock level)
+  - min_stock   : INTEGER (Alert threshold)
+  - expiry_date : TEXT (ISO format: YYYY-MM-DD)
+  - supplier    : TEXT (Manufacturer/Provider name)
+  - price       : REAL (Unit price in INR)
+  - created_at  : TEXT (Timestamp)
+
+* Table: `activity`
+  - id          : INTEGER (Primary Key)
+  - action      : TEXT (e.g., "Sale Completed", "Add Medicine")
+  - detail      : TEXT (Specifics like ID or Invoice number)
+  - user        : TEXT (The username of the performer)
+  - timestamp   : TEXT (ISO format)
+
+3. BACKEND API ENDPOINTS (RESTful)
+--------------------------------------------------------------------------------
+- POST   /                   : User login authentication.
+- GET    /logout             : Session termination.
+- GET    /api/stats          : Real-time dashboard numeric counters.
+- GET    /api/medicines      : Fetch inventory with pagination, search, & sorting.
+- POST   /api/medicines      : Insert new stock items (Auth restricted).
+- PUT    /api/medicines/<id> : Update existing stock items (Auth restricted).
+- DELETE /api/medicines/<id> : Remove stock items (Admin only).
+- GET    /api/alerts         : Fetch all low stock/expired warnings.
+- GET    /api/activity       : Fetch last 20 system actions.
+- GET    /api/cart           : Current session shopping cart.
+- POST   /api/cart           : Add item to billing cart.
+- POST   /api/checkout       : Deduct stock, log sale, and clear cart.
+- GET    /api/export/csv     : Download full inventory in CSV.
+- GET    /api/search         : High-speed query for POS autocomplete.
+- POST   /api/chat           : MediBot conversation (Gemini Flash).
+- POST   /api/consult        : Symptom analysis (Gemini Flash).
+
+4. FRONTEND COMPONENTS & "CORNERS"
+--------------------------------------------------------------------------------
+A. LOGIN PAGE (login.html)
+   - "Magnetic" 3D Card: Follows mouse movement using JS perspective math.
+   - Role Quick-Select: Tabs to instantly fill demo credentials (Alt+1/2/3).
+   - Theme Switcher: Global CSS variable injector with 6 palettes.
+   - Particle Starfield: Dynamic background with floating dust particles.
+   - Password Toggle: Interactive eye icon for visibility.
+   - Fly-Through Transition: Seamless zoom effect on successful login.
+
+B. MAIN DASHBOARD (index.html)
+   - Sidebar Navigation: Glassmorphic menu with staggered animations.
+   - Topbar: Displays current section title, real-time clock, and alert dot.
+   - Welcome Banner: Dynamic greeting with user's role and name.
+   - Stat Cards: Four interactive tiles with glow effects and number counters.
+   - Quick Action Tiles: Instant access to Add, Alert, Search, and Reports.
+
+C. INVENTORY UI
+   - Skeleton Loaders: Shimmering placeholders during data fetching.
+   - Interactive Table: 
+     * Sortable headers with indicators (▲/▼).
+     * Status badges (OK, Low, Expired).
+     * Action buttons (Edit/Delete) with tooltips.
+   - Filter Tabs: Real-time filtering without page reloads.
+
+D. AI MEDIBOT PANEL
+   - Floating Action Button (FAB): Pulsing button for instant help.
+   - 3-Tab Chat Interface:
+     1. [MediBot]: Chat with full DB context (knows exactly what is in stock).
+     2. [Consult]: Interactive symptom chips and severity selection.
+     3. [Doctors]: List of doctors with click-to-call and WhatsApp links.
+   - Typing Indicators: Pulsing dots while AI is generating responses.
+
+E. BILLING & POS INTERFACE
+   - Live Search: Instant filtering of stock for checkout.
+   - Dynamic Cart: Real-time calculation of subtotal and total.
+   - Stock Guard: Immediate visual and functional block if stock is low.
+
+5. DESIGN SYSTEM & ANIMATIONS
+--------------------------------------------------------------------------------
+- CSS Variables Strategy: Everything from `--accent` to `--glow` is themeable.
+- Glassmorphism: Heavy use of `backdrop-filter: blur(20px)` and transparency.
+- Key Animations:
+  - `gridMove`: Perpetually scrolling background grid.
+  - `orbFloat`: Ambient floating neon spheres.
+  - `scaleUp`: Bounce entrance for dashboard elements.
+  - `glassShimmer`: Wave effect passing over cards on hover.
+  - `pageEnter`: Slide-up animation for content sections.
+
+6. AI PROMPT ENGINEERING
+--------------------------------------------------------------------------------
+- Inventory Context: Every chat message sends a full dump of the DB to Gemini.
+- Safety Personas:
+  - MediBot: Helpful pharmacy assistant.
+  - Consultant: Empathetic symptom analyzer with emergency warnings (Call 108).
+- Real-time DB Injection: MediBot can answer "How many Paracetamols are left?"
+
+7. MOBILE & PWA FEATURES
+--------------------------------------------------------------------------------
+- Manifest: Custom hospital icon (🏥) for "Add to Home Screen".
+- Service Worker: Caches core files for lightning-fast loads.
+- Responsive Logic: Flexbox and Grid layouts that collapse for small screens.
+- Hamburger Menu: Custom animated icon for mobile navigation.

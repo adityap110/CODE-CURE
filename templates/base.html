@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="CodeCure — Smart Medical Inventory Management System"/>
+<meta name="theme-color" content="#0d9488"/>
+<title>CodeCure — {% block title %}Dashboard{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-body: #0F172A;
+    --bg-card: #1E293B;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --accent-primary: #D97706;
+    --accent-secondary: #0D9488;
+    --border-color: rgba(255, 255, 255, 0.05);
+    --shadow-style: 0 10px 30px rgba(0, 0, 0, 0.4);
+    --sidebar-bg: #1E293B;
+    --red: #E11D48;
+    --green: #10B981;
+    --sidebar-w: 260px;
+    --topbar-sub: "";
+  }
+
+  [data-theme="white-gold"] {
+    --bg-body: #F8FAFC;
+    --bg-card: #FFFFFF;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --accent-primary: #B45309;
+    --accent-secondary: #0D9488;
+    --border-color: #E2E8F0;
+    --shadow-style: 0 10px 25px rgba(0, 0, 0, 0.05);
+    --sidebar-bg: #F4F7FB;
+  }
+
+  [data-theme="white-black"] {
+    --bg-body: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --accent-primary: #000000;
+    --accent-secondary: #000000;
+    --border-color: #000000;
+    --shadow-style: none;
+    --sidebar-bg: #FFFFFF;
+  }
+
+  [data-theme="white-orange"] {
+    --bg-body: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --accent-primary: #EA580C;
+    --accent-secondary: #0D9488;
+    --border-color: #E2E8F0;
+    --shadow-style: 0 10px 25px rgba(0, 0, 0, 0.05);
+    --sidebar-bg: #F4F7FB;
+  }
+
+  [data-theme="white-black-gold"] {
+    --bg-body: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --text-primary: #1E293B;
+    --text-secondary: #475569;
+    --accent-primary: #EAB308;
+    --accent-secondary: #000000;
+    --border-color: #000000;
+    --shadow-style: 0 10px 25px rgba(0, 0, 0, 0.05);
+    --sidebar-bg: #FFFFFF;
+  }
+
+  /* ═══ AMBIENT BACKGROUND ═══ */
+  body::before, body::after, .orb, .particles, .geo-shape { display: none; }
+
+  html { scroll-behavior: smooth; }
+  body { 
+    background: var(--bg-body); 
+    color: var(--text-primary); 
+    font-family: 'Inter', sans-serif; 
+    display: flex; 
+    min-height: 100vh; 
+  }
+
+  /* ═══ SIDEBAR ═══ */
+  .sidebar {
+    width: var(--sidebar-w); 
+    flex-shrink: 0;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex; 
+    flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+  }
+  
+  .sidebar-logo { 
+    padding: 32px 24px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: flex-start;
+  }
+  
+  .logo-icon-sm {
+    font-size: 0;
+    width: 40px; height: 40px;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .logo-icon-sm::before { content: ""; position: absolute; top: 10px; bottom: 10px; left: 18px; width: 2px; background: #0F766E; }
+  .logo-icon-sm::after { content: ""; position: absolute; left: 10px; right: 10px; top: 18px; height: 2px; background: #0F766E; }
+
+  .logo-text { font-size: 0; color: transparent; }
+  .logo-text span { display: none; }
+  .logo-text::before {
+    content: "CodeCure";
+    white-space: pre-wrap;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #0F766E;
+    display: block;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+  .logo-text::after {
+    content: "Smart Medical Inventory";
+    font-size: 0.8rem;
+    color: #64748B;
+    display: block;
+    margin-top: 12px;
+    font-weight: 400;
+  }
+
+  .sidebar-user, .nav-section, .theme-picker { display: none; }
+
+  nav { flex: 1; padding: 0 16px; margin-top: 16px; }
+  
+  .nav-item {
+    display: flex; align-items: center; gap: 12px; 
+    padding: 12px 16px; 
+    border-radius: 8px;
+    color: var(--text-secondary); 
+    font-size: 0.9rem; 
+    font-weight: 500; 
+    cursor: pointer;
+    transition: all 0.2s; 
+    margin-bottom: 6px; 
+    text-decoration: none;
+  }
+  .nav-item:hover { background: rgba(255, 255, 255, 0.1); color: var(--accent-primary); }
+  .nav-item.active { 
+    background: var(--accent-primary); 
+    color: #FFFFFF; 
+    font-weight: 600; 
+  }
+  
+  .nav-item .nav-icon { 
+    font-size: 0; /* Hide emoji */
+    width: 20px; height: 20px; 
+    background-color: currentColor;
+    display: block;
+  }
+  .nav-badge { margin-left: auto; background: var(--red); color: #fff; border-radius: 12px; padding: 2px 8px; font-size: 0.7rem; font-weight: 600; }
+
+  .sidebar-footer { 
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-footer::before {
+    content: "⚠  Emergency Alert";
+    background: #E11D48;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: background 0.2s;
+  }
+  .sidebar-footer::before:hover { background: #BE123C; }
+
+  .btn-logout {
+    display: flex; align-items: center; gap: 8px; 
+    width: 100%; padding: 8px; 
+    background: transparent; border: none;
+    color: #475569; cursor: pointer; 
+    font-size: 0; font-weight: 500; transition: all 0.2s; text-decoration: none;
+  }
+  .btn-logout:hover { color: #0F172A; }
+  .btn-logout::before {
+    content: "Logout";
+    font-size: 0.9rem;
+  }
+  /* Pseudo Support Link */
+  .btn-logout::after {
+    content: "Support";
+    position: absolute;
+    top: -36px;
+    left: 8px;
+    font-size: 0.9rem;
+    color: #475569;
+  }
+
+  /* ═══ MAIN ═══ */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; position: relative; z-index: 10; background: var(--bg-body); }
+  
+  .topbar {
+    background: var(--bg-body);
+    padding: 40px 40px 24px 40px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  
+  .topbar-title { 
+    font-family: 'Inter', sans-serif; 
+    font-size: 2rem; 
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+  }
+  .topbar-title::after {
+    content: var(--topbar-sub, "");
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-top: 8px;
+  }
+  
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .clock { 
+    font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; 
+    border: 1px solid var(--border-color); border-radius: 20px; padding: 8px 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .clock::before {
+    content: "📅";
+    filter: grayscale(1);
+  }
+
+  .content { padding: 0 40px 40px 40px; flex: 1; }
+
+  /* ═══ SHARED COMPONENTS ═══ */
+  .welcome-banner { display: none; } /* Hide welcome banner entirely based on mockups */
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color); 
+    border-radius: 16px; 
+    overflow: hidden;
+    box-shadow: var(--shadow-style);
+  }
+  .card-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-weight: 600; font-size: 1.1rem; color: var(--text-primary); }
+  .card-body { padding: 24px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px; }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color); 
+    border-radius: 16px; 
+    padding: 24px;
+    position: relative; overflow: hidden;
+    box-shadow: var(--shadow-style);
+  }
+  .stat-num { font-family: 'DM Serif Display', serif; font-size: 2.5rem; line-height: 1; margin-bottom: 8px; color: var(--text-primary); }
+  .stat-label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+  .stat-icon { font-size: 0; width: 32px; height: 32px; position: absolute; top: 24px; left: 24px; background-color: var(--accent-secondary); }
+  
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; border: none;
+    cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent-primary); color: #fff; }
+  .btn-primary:hover { opacity: 0.9; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px; z-index: 999;
+    background: var(--text-primary); border-radius: 8px;
+    padding: 14px 20px; color: var(--bg-body); font-size: 0.9rem; font-weight: 500;
+    display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-style);
+    transform: translateY(80px); opacity: 0; transition: all 0.3s; pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  .theme-switcher {
+    padding: 16px 24px;
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+  }
+  .theme-dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    cursor: pointer; border: 2px solid transparent;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .theme-dot:hover { transform: scale(1.1); }
+  .theme-dot.active { border-color: var(--accent-primary); transform: scale(1.1); }
+  
+  .td-sapphire { background: #0F172A; }
+  .td-whitegold { background: #FDE68A; }
+  .td-monochrome { background: #000000; }
+  .td-clinical { background: #EA580C; }
+  .td-wbgold { background: #EAB308; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+
+  .hamburger {
+    display: none; width: 36px; height: 36px; border: none; background: #F1F5F9;
+    border-radius: 8px; cursor: pointer; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  }
+  .hamburger span { display: block; width: 18px; height: 2px; background: #0F172A; border-radius: 2px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  @media (max-width: 768px) {
+    .hamburger { display: flex; }
+    .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; }
+    .sidebar-overlay.open { display: block; }
+    .stat-grid { grid-template-columns: 1fr; }
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+    .topbar { padding: 16px; }
+  }
+
+{% block extra_css %}{% endblock %}
+</style>
+</head>
+<body>
+<!-- Ambient Background -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+<div class="particles" id="particles"></div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon-sm">🏥</div>
+    <div class="logo-text">Code<span>Cure</span></div>
+  </div>
+  <div class="sidebar-user">
+    <div class="u-role">{{ role }}</div>
+    <div class="u-name">{{ user }}</div>
+  </div>
+  <nav>
+    <div class="nav-section">Main Menu</div>
+    {% block sidebar_nav %}{% endblock %}
+    <div class="nav-section" style="display:block; margin-top: auto;">Appearance</div>
+    <div class="theme-switcher">
+      <div class="theme-dot td-sapphire active" data-theme="default" onclick="setTheme('default')" title="Executive Sapphire"></div>
+      <div class="theme-dot td-whitegold" data-theme="white-gold" onclick="setTheme('white-gold')" title="Royal White-Gold"></div>
+      <div class="theme-dot td-monochrome" data-theme="white-black" onclick="setTheme('white-black')" title="High-Contrast Monochrome"></div>
+      <div class="theme-dot td-clinical" data-theme="white-orange" onclick="setTheme('white-orange')" title="Clinical White-Orange"></div>
+      <div class="theme-dot td-wbgold" data-theme="white-black-gold" onclick="setTheme('white-black-gold')" title="Executive White-Black-Gold"></div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <a class="btn-logout" href="/logout">🚪 Logout</a>
+  </div>
+</aside>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="topbar-title">{% block topbar_title %}Dashboard{% endblock %}</div>
+    <div class="topbar-right">
+      <div class="clock" id="clock">--:--:--</div>
+      {% block topbar_actions %}{% endblock %}
+    </div>
+  </div>
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Theme
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('codecure-theme', t);
+  document.querySelectorAll('.tdot').forEach(d => d.classList.toggle('active', d.dataset.t === t));
+}
+(function() { const s = localStorage.getItem('codecure-theme'); if (s) setTheme(s); })();
+
+// ── Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ── Sidebar toggle
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ── Particles
+(function() {
+  const c = document.getElementById('particles');
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100+'%';
+    p.style.animationDuration = (8+Math.random()*12)+'s';
+    p.style.animationDelay = Math.random()*8+'s';
+    p.style.width = p.style.height = (2+Math.random()*3)+'px';
+    c.appendChild(p);
+  }
+})();
+
+// ── Toast
+function showToast(msg, duration=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── Section Switching (used by sidebar nav items)
+function showSection(sectionId, navEl) {
+  // Hide all sections
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  // Show target section
+  const target = document.getElementById('sec-' + sectionId);
+  if (target) target.classList.add('active');
+  // Update active nav item
+  if (navEl) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    navEl.classList.add('active');
+  }
+  // Close mobile sidebar
+  closeSidebar();
+  // Scroll to top
+  document.querySelector('.content').scrollTop = 0;
+  window.scrollTo(0, 0);
+  // Fire custom event so child pages can react (e.g. lazy-load data)
+  document.dispatchEvent(new CustomEvent('sectionChanged', { detail: { section: sectionId } }));
+}
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

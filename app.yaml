@@ -1,0 +1,19 @@
+runtime: python311
+instance_class: F1
+
+entrypoint: gunicorn wsgi:application --bind 0.0.0.0:$PORT
+
+env_variables:
+  SECRET_KEY: "codecure-secret-change-in-production"
+  GEMINI_API_KEY: "AIzaSyA27t-9dcW0hTOiZ1nLWVry4RX1kTYi2vI"
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 2
+  target_cpu_utilization: 0.65
+
+handlers:
+  - url: /static
+    static_dir: static
+  - url: /.*
+    script: auto

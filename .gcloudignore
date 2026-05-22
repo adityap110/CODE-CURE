@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+.env
+codecure.db
+.git/
+*.md
+test_models.py
+update_app.py
+.DS_Store
+*.log
+.opencode/

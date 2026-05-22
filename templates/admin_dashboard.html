@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block topbar_title %}👨‍💼 Admin Dashboard{% endblock %}
+
+{% block sidebar_nav %}
+<div class="nav-item active" onclick="showSection('dashboard', this)">
+  <span class="nav-icon">📊</span> Dashboard
+</div>
+<div class="nav-item" onclick="showSection('inventory', this)">
+  <span class="nav-icon">💊</span> Inventory
+</div>
+<div class="nav-item" onclick="showSection('alerts', this)">
+  <span class="nav-icon">🔔</span> Alerts
+</div>
+<div class="nav-item" onclick="showSection('reports', this)">
+  <span class="nav-icon">📈</span> Reports
+</div>
+{% endblock %}
+
+{% block extra_css %}
+:root { --topbar-sub: "Real-time facility analytics & KPIs."; }
+
+/* ═══ SIDEBAR ICONS ═══ */
+.nav-item:nth-child(1) .nav-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>') no-repeat center; }
+.nav-item:nth-child(2) .nav-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>') no-repeat center; }
+.nav-item:nth-child(3) .nav-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>') no-repeat center; }
+.nav-item:nth-child(4) .nav-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>') no-repeat center; }
+
+/* ═══ OVERVIEW GRID ═══ */
+.overview-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; margin-bottom:32px; }
+.ov-card {
+  background: var(--bg-card); border:1px solid var(--border-color);
+  border-radius:16px; padding:24px; position:relative; overflow:hidden;
+  transition:all .2s; box-shadow: var(--shadow-style);
+  display: flex; flex-direction: column;
+}
+.ov-card:hover { border-color: var(--accent-secondary); transform:translateY(-2px); }
+
+/* Reorder contents visually to match mockup */
+.ov-label { order: 1; font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: none; letter-spacing: normal; margin-bottom: 8px; }
+.ov-num { order: 2; font-family: 'DM Serif Display', serif; font-size: 2.2rem; color: var(--text-primary); margin-bottom: 8px; line-height: 1; }
+.ov-sub { order: 3; font-size: 0.8rem; color: var(--text-secondary); margin-top: 0; }
+
+.ov-icon {
+  position: absolute; top: 24px; right: 24px;
+  font-size: 0; width: 32px; height: 32px; background-color: var(--text-secondary);
+}
+.ov-card:nth-child(1) .ov-icon {
+  background-color: #0F766E;
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>') no-repeat center;
+}
+.ov-card:nth-child(2) .ov-icon {
+  background-color: #10B981;
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>') no-repeat center;
+}
+.ov-card:nth-child(3) .ov-icon {
+  background-color: #F59E0B;
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>') no-repeat center;
+}
+.ov-card:nth-child(4) .ov-icon {
+  background-color: #EF4444;
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>') no-repeat center;
+}
+
+/* ═══ MANAGEMENT CARDS ═══ */
+.mgmt-card {
+  background: var(--bg-card); border:1px solid var(--border-color);
+  border-radius:16px; padding:24px; transition:all .2s;
+  box-shadow: var(--shadow-style); position:relative; overflow:hidden;
+}
+.mgmt-card:hover { border-color: var(--accent-secondary); transform:translateY(-2px); }
+
+.mgmt-icon { font-size:0; width:36px; height:36px; margin-bottom:16px; display:block; background-color: var(--accent-secondary); }
+.mgmt-card:nth-child(1) .mgmt-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>') no-repeat left center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>') no-repeat left center; }
+.mgmt-card:nth-child(2) .mgmt-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>') no-repeat left center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>') no-repeat left center; }
+.mgmt-card:nth-child(3) .mgmt-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>') no-repeat left center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>') no-repeat left center; }
+
+.mgmt-title { font-family:'Inter',sans-serif; font-weight:600; font-size:1.1rem; margin-bottom:8px; color: var(--text-primary); }
+.mgmt-desc { font-size:.85rem; color: var(--text-secondary); line-height:1.5; margin-bottom:20px; }
+.mgmt-action {
+  display:inline-flex; align-items:center; gap:6px; padding:10px 16px; border-radius:8px;
+  background: var(--bg-body); color: var(--accent-secondary); border:1px solid transparent;
+  font-size:.85rem; font-weight:600; text-decoration:none; transition:all .2s;
+  cursor:pointer;
+}
+.mgmt-action:hover { opacity: 0.8; }
+.mgmt-card:nth-child(1) .mgmt-action { font-size: 0; }
+.mgmt-card:nth-child(1) .mgmt-action::after { content: "➔ View Inventory"; font-size: 0.85rem; }
+.mgmt-card:nth-child(2) .mgmt-action { font-size: 0; }
+.mgmt-card:nth-child(2) .mgmt-action::after { content: "➔ View Reports"; font-size: 0.85rem; }
+.mgmt-card:nth-child(3) .mgmt-action { font-size: 0; }
+.mgmt-card:nth-child(3) .mgmt-action::after { content: "➔ Manage Users"; font-size: 0.85rem; }
+
+/* ═══ USER ITEMS ═══ */
+.user-item {
+  display:flex; align-items:center; gap:16px; padding:12px;
+  border-radius:12px; border:1px solid transparent; margin-bottom:12px;
+  background: var(--bg-card); transition:all .2s;
+}
+.user-item:hover { background: var(--bg-body); border-color: var(--border-color); }
+.user-avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0; flex-shrink:0; background-size:20px !important; background-position:center !important; background-repeat:no-repeat !important; }
+.user-avatar.admin { background: var(--accent-secondary) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>'); }
+.user-avatar.pharmacist { background: #818CF8 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="7" y="7" width="10" height="14" rx="2"></rect><path d="M10 3h4v4h-4z"></path></svg>'); }
+.user-avatar.cashier { background: #F59E0B url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M8 9h8"></path><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path></svg>'); }
+.user-avatar.doctor { background: var(--green) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>'); }
+.user-info { flex:1; }
+.user-name { font-size:.9rem; font-weight:600; color: var(--text-primary); text-transform:capitalize; }
+.user-role { font-size:.72rem; color: var(--text-secondary); text-transform:uppercase; letter-spacing:.06em; font-weight:500; }
+.user-status { font-size:.75rem; color: var(--green); font-weight:500; display:flex; align-items:center; gap:6px; }
+.user-status .dot { width:8px; height:8px; border-radius:50%; background: var(--green); }
+
+/* ═══ ACTIVITY ITEM ═══ */
+.activity-item { display:flex; align-items:center; gap:16px; padding:12px 0; border-bottom:1px solid var(--border-color); }
+.activity-item:last-child { border-bottom:none; }
+.act-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; background: var(--bg-body); color: var(--accent-secondary); }
+.act-action { font-size:.9rem; font-weight:500; color: var(--text-primary); }
+.act-detail { font-size:.8rem; color: var(--text-secondary); }
+.act-time { margin-left:auto; font-size:.75rem; color: var(--text-secondary); white-space:nowrap; }
+
+/* ═══ TABLE ═══ */
+table th { background: var(--bg-card) !important; color: var(--text-secondary) !important; font-family: 'Inter', sans-serif !important; font-weight: 600 !important; border-bottom: 1px solid var(--border-color) !important; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; padding: 16px !important; }
+table td { border-bottom: 1px solid var(--border-color); color: var(--text-primary); padding: 16px !important; font-size: 0.85rem; }
+
+@media (max-width:768px) { .overview-grid { grid-template-columns:repeat(2,1fr); } }
+@media (max-width:480px) { .overview-grid { grid-template-columns:1fr; } }
+{% endblock %}
+
+{% block content %}
+<!-- ═══ DASHBOARD SECTION ═══ -->
+<div class="section active" id="sec-dashboard">
+<!-- Welcome Banner -->
+<div class="welcome-banner" style="animation:scaleUp .6s cubic-bezier(.16,1,.3,1) backwards">
+  <div class="wb-title">Welcome back, {{ user|capitalize }}! 👨‍💼</div>
+  <div class="wb-sub">Full system control — manage inventory, users, revenue, and analytics.</div>
+  <div class="wb-badge">🔒 Administrator Access</div>
+</div>
+
+<!-- System Overview Stats -->
+<div class="overview-grid">
+  <div class="ov-card" style="animation:scaleUp .6s .15s cubic-bezier(.16,1,.3,1) backwards">
+    <div class="ov-icon">📦</div>
+    <div class="ov-num" id="ov-total">—</div>
+    <div class="ov-label">Total Medicines</div>
+    <div class="ov-sub">All registered items</div>
+  </div>
+  <div class="ov-card" style="animation:scaleUp .6s .25s cubic-bezier(.16,1,.3,1) backwards">
+    <div class="ov-icon">✅</div>
+    <div class="ov-num" id="ov-ok">—</div>
+    <div class="ov-label">In Stock</div>
+    <div class="ov-sub">Sufficient supply</div>
+  </div>
+  <div class="ov-card" style="animation:scaleUp .6s .35s cubic-bezier(.16,1,.3,1) backwards">
+    <div class="ov-icon">⚠️</div>
+    <div class="ov-num" id="ov-low">—</div>
+    <div class="ov-label">Low Stock</div>
+    <div class="ov-sub">Needs reorder</div>
+  </div>
+  <div class="ov-card" style="animation:scaleUp .6s .45s cubic-bezier(.16,1,.3,1) backwards">
+    <div class="ov-icon">🚨</div>
+    <div class="ov-num" id="ov-exp">—</div>
+    <div class="ov-label">Expired</div>
+    <div class="ov-sub">Immediate action</div>
+  </div>
+</div>
+
+<!-- Management Cards -->
+<div class="grid3" style="animation:scaleUp .6s .5s cubic-bezier(.16,1,.3,1) backwards">
+  <div class="mgmt-card">
+    <span class="mgmt-icon">🖥️</span>
+    <div class="mgmt-title">System Overview</div>
+    <div class="mgmt-desc">Monitor real-time system health, database status, and application performance metrics.</div>
+    <button class="mgmt-action" onclick="showSection('inventory', document.querySelectorAll('.nav-item')[1])">📊 View Inventory</button>
+  </div>
+  <div class="mgmt-card">
+    <span class="mgmt-icon">💰</span>
+    <div class="mgmt-title">Revenue &amp; Sales</div>
+    <div class="mgmt-desc">Track daily sales, revenue reports, invoice history, and financial analytics.</div>
+    <button class="mgmt-action" onclick="showSection('reports', document.querySelectorAll('.nav-item')[3])">📈 View Reports</button>
+  </div>
+  <div class="mgmt-card">
+    <span class="mgmt-icon">👥</span>
+    <div class="mgmt-title">User Management</div>
+    <div class="mgmt-desc">Manage pharmacist, cashier, and doctor accounts. Control access and permissions.</div>
+    <button class="mgmt-action" onclick="showToast('🔧 User management module coming soon!')">⚙️ Manage Users</button>
+  </div>
+</div>
+
+<!-- Bottom Row -->
+<div class="grid2" style="animation:scaleUp .6s .6s cubic-bezier(.16,1,.3,1) backwards">
+  <div class="card">
+    <div class="card-header"><div class="card-title">👥 Registered Users</div></div>
+    <div class="card-body">
+      <div class="user-item">
+        <div class="user-avatar admin">👨‍💼</div>
+        <div class="user-info"><div class="user-name">admin</div><div class="user-role">Administrator</div></div>
+        <div class="user-status"><span class="dot"></span> Active</div>
+      </div>
+      <div class="user-item">
+        <div class="user-avatar pharmacist">💊</div>
+        <div class="user-info"><div class="user-name">pharmacist</div><div class="user-role">Pharmacist</div></div>
+        <div class="user-status"><span class="dot"></span> Active</div>
+      </div>
+      <div class="user-item">
+        <div class="user-avatar cashier">🛒</div>
+        <div class="user-info"><div class="user-name">cashier</div><div class="user-role">Cashier</div></div>
+        <div class="user-status"><span class="dot"></span> Active</div>
+      </div>
+      <div class="user-item">
+        <div class="user-avatar doctor">🩺</div>
+        <div class="user-info"><div class="user-name">doctor</div><div class="user-role">Doctor</div></div>
+        <div class="user-status"><span class="dot"></span> Active</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">🕐 Recent Activity</div></div>
+    <div class="card-body" id="admin-activity" style="max-height:320px;overflow-y:auto;">
+      <div class="empty-state"><div class="empty-icon">🕐</div>Loading activity…</div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="animation:scaleUp .6s .7s cubic-bezier(.16,1,.3,1) backwards">
+  <div class="card-header"><div class="card-title">💰 Stock Valuation</div></div>
+  <div class="card-body" style="text-align:center;padding:32px;">
+    <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Total Pharmacy Assets</div>
+    <div style="font-family:'DM Serif Display',serif;font-size:3rem;color:var(--accent2);" id="stock-val">₹—</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-top:8px;">Combined value of all medicines in inventory</div>
+  </div>
+</div>
+</div><!-- /sec-dashboard -->
+
+<!-- ═══ INVENTORY SECTION ═══ -->
+<div class="section" id="sec-inventory">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">💊 Full Inventory</div>
+      <input type="text" id="admin-inv-search" placeholder="🔍 Filter by name..." style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--slate);color:var(--white);width:220px;font-size:.85rem;outline:none;" oninput="filterAdminInventory()">
+    </div>
+    <div class="card-body" style="padding:0;">
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+          <thead><tr>
+            <th style="background:var(--glow-soft);color:var(--accent2);font-weight:600;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;text-align:left;">#</th>
+            <th style="background:var(--glow-soft);color:var(--accent2);font-weight:600;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;text-align:left;">Medicine</th>
+            <th style="background:var(--glow-soft);color:var(--accent2);font-weight:600;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;text-align:left;">Category</th>
+            <th style="background:var(--glow-soft);color:var(--accent2);font-weight:600;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;text-align:left;">Qty</th>
+            <th style="background:var(--glow-soft);color:var(--accent2);font-weight:600;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;text-align:left;">Expiry</th>
+            <th style="background:var(--glow-soft);color:var(--accent2);font-weight:600;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;text-align:left;">Price</th>
+            <th style="background:var(--glow-soft);color:var(--accent2);font-weight:600;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;text-align:left;">Status</th>
+          </tr></thead>
+          <tbody id="admin-inv-tbody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div><!-- /sec-inventory -->
+
+<!-- ═══ ALERTS SECTION ═══ -->
+<div class="section" id="sec-alerts">
+  <div class="card">
+    <div class="card-header"><div class="card-title">⚠️ Active Alerts</div></div>
+    <div class="card-body" id="admin-all-alerts">
+      <div class="empty-state"><div class="empty-icon">🔔</div>Loading alerts…</div>
+    </div>
+  </div>
+</div><!-- /sec-alerts -->
+
+<!-- ═══ REPORTS SECTION ═══ -->
+<div class="section" id="sec-reports">
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-body" style="text-align:center;padding:32px;">
+      <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">📊 Stock Valuation</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:3rem;color:var(--accent2);" id="rpt-stock-val">₹—</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">📋 Inventory Summary Report</div></div>
+    <div class="card-body" id="admin-report-body">
+      <div class="empty-state"><div class="empty-icon">📊</div>Loading report…</div>
+    </div>
+  </div>
+</div><!-- /sec-reports -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadAdminStats() {
+  try {
+    const r = await fetch('/api/stats'); const d = await r.json();
+    document.getElementById('ov-total').textContent = d.total;
+    document.getElementById('ov-ok').textContent = d.ok;
+    document.getElementById('ov-low').textContent = d.low;
+    document.getElementById('ov-exp').textContent = d.expired;
+  } catch(e) { console.error(e); }
+}
+async function loadActivity() {
+  try {
+    const r = await fetch('/api/activity'); const d = await r.json();
+    const el = document.getElementById('admin-activity');
+    if (!d.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div>No recent activity</div>'; return; }
+    el.innerHTML = d.slice(0,10).map(a => {
+      const icons = {Login:'🔑',Logout:'🚪','Add Medicine':'💊','Edit Medicine':'✏️','Delete Medicine':'🗑️','Sale Completed':'💰'};
+      return `<div class="activity-item">
+        <div class="act-icon">${icons[a.action]||'📋'}</div>
+        <div><div class="act-action">${a.action}</div><div class="act-detail">${a.detail||''}</div></div>
+        <div class="act-time">${a.timestamp||''}</div>
+      </div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+async function loadValuation() {
+  try {
+    const r = await fetch('/api/stock-valuation'); const d = await r.json();
+    document.getElementById('stock-val').textContent = '₹' + (d.stock_valuation||0).toLocaleString('en-IN',{minimumFractionDigits:2});
+  } catch(e) { console.error(e); }
+}
+loadAdminStats(); loadActivity(); loadValuation();
+
+// ── Inventory section (lazy-loaded)
+let adminInvData = [];
+let adminInvLoaded = false;
+async function loadAdminInventory() {
+  if (adminInvLoaded) return;
+  try {
+    const r = await fetch('/api/medicines?per_page=200&sort=name&dir=asc');
+    const d = await r.json();
+    adminInvData = d.data || [];
+    renderAdminInventory(adminInvData);
+    adminInvLoaded = true;
+  } catch(e) { console.error(e); }
+}
+function renderAdminInventory(list) {
+  const tbody = document.getElementById('admin-inv-tbody');
+  const today = new Date().toISOString().split('T')[0];
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No medicines found</td></tr>'; return; }
+  tbody.innerHTML = list.map((m, i) => {
+    let status = 'ok', label = '✅ In Stock', cls = 'background:rgba(16,185,129,.15);color:#34d399';
+    if (m.expiry_date && m.expiry_date <= today) { status = 'expired'; label = '🚨 Expired'; cls = 'background:rgba(244,63,94,.15);color:#fb7185'; }
+    else if (m.quantity < m.min_stock) { status = 'low'; label = '⚠️ Low'; cls = 'background:rgba(245,158,11,.15);color:#fbbf24'; }
+    return `<tr><td style="padding:13px 14px;border-bottom:1px solid rgba(148,163,184,.07);color:var(--light)">${i+1}</td><td style="padding:13px 14px;border-bottom:1px solid rgba(148,163,184,.07);font-weight:600;color:var(--white)">${m.name}</td><td style="padding:13px 14px;border-bottom:1px solid rgba(148,163,184,.07);color:var(--light)">${m.category||'—'}</td><td style="padding:13px 14px;border-bottom:1px solid rgba(148,163,184,.07);color:var(--light)">${m.quantity}</td><td style="padding:13px 14px;border-bottom:1px solid rgba(148,163,184,.07);color:var(--light)">${m.expiry_date||'—'}</td><td style="padding:13px 14px;border-bottom:1px solid rgba(148,163,184,.07);color:var(--light)">₹${(m.price||0).toFixed(2)}</td><td style="padding:13px 14px;border-bottom:1px solid rgba(148,163,184,.07)"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600;${cls}">${label}</span></td></tr>`;
+  }).join('');
+}
+function filterAdminInventory() {
+  const q = document.getElementById('admin-inv-search').value.toLowerCase().trim();
+  renderAdminInventory(q ? adminInvData.filter(m => (m.name||'').toLowerCase().includes(q)) : adminInvData);
+}
+
+// ── Alerts section (lazy-loaded) with Restock/Discard actions
+let adminAlertsLoaded = false;
+async function loadAdminAlerts() {
+  try {
+    const r = await fetch('/api/alerts');
+    const alerts = await r.json();
+    const el = document.getElementById('admin-all-alerts');
+    if (!alerts.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div>No active alerts! All inventory is healthy.</div>'; adminAlertsLoaded = true; return; }
+    el.innerHTML = alerts.map(a => {
+      const isCritical = a.severity === 'critical';
+      const icon = a.type === 'expired' ? '🚨' : a.type === 'out' ? '❌' : a.type === 'low' ? '⚠️' : '⏳';
+      const tagClr = isCritical ? 'background:rgba(244,63,94,.15);color:#fb7185' : 'background:rgba(245,158,11,.15);color:#fbbf24';
+      const tagText = a.type === 'expired' ? 'EXPIRED' : a.type === 'out' ? 'OUT OF STOCK' : a.type === 'low' ? 'LOW STOCK' : 'EXPIRING SOON';
+
+      // Action buttons based on alert type
+      let actions = '';
+      if (a.type === 'low' || a.type === 'out') {
+        actions = `<button onclick="adminRestock(${a.id}, this)" style="padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .18s;font-family:'DM Sans',sans-serif">📦 Restock</button>`;
+      }
+      if (a.type === 'expired') {
+        actions = `<button onclick="adminRestock(${a.id}, this)" style="padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .18s;font-family:'DM Sans',sans-serif;margin-right:6px">📦 Restock</button><button onclick="adminDiscard(${a.id}, this)" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(244,63,94,.4);background:rgba(244,63,94,.1);color:#fb7185;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .18s;font-family:'DM Sans',sans-serif">🗑️ Discard</button>`;
+      }
+      if (a.type === 'expiring') {
+        actions = `<button onclick="adminDiscard(${a.id}, this)" style="padding:6px 14px;border-radius:8px;border:1px solid rgba(244,63,94,.4);background:rgba(244,63,94,.1);color:#fb7185;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .18s;font-family:'DM Sans',sans-serif">🗑️ Discard</button>`;
+      }
+
+      return `<div id="admin-alert-${a.id}" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;background:rgba(30,41,59,.35);transition:all .3s">
+        <span style="font-size:1.6rem;flex-shrink:0">${icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;color:var(--white);font-size:.9rem;margin-bottom:3px">${a.name}</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="display:inline-flex;padding:2px 8px;border-radius:6px;font-size:.68rem;font-weight:700;letter-spacing:.03em;${tagClr}">${tagText}</span>
+            <span style="font-size:.75rem;color:var(--muted)">${a.detail}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">${actions}</div>
+      </div>`;
+    }).join('');
+    adminAlertsLoaded = true;
+  } catch(e) { console.error(e); }
+}
+
+async function adminRestock(id, btn) {
+  btn.disabled = true; btn.textContent = '⏳...';
+  try {
+    const r = await fetch('/api/medicines/' + id + '/restock', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
+    const d = await r.json();
+    if (d.success) {
+      showToast('📦 ' + d.name + ' restocked to ' + d.new_quantity + ' units');
+      const card = document.getElementById('admin-alert-' + id);
+      if (card) { card.style.opacity = '0'; card.style.transform = 'translateX(40px)'; setTimeout(() => card.remove(), 300); }
+      adminAlertsLoaded = false; adminInvLoaded = false; // force re-fetch on next visit
+      setTimeout(() => loadAdminAlerts(), 400);
+      loadAdminStats();
+    } else { showToast('❌ ' + (d.error||'Failed')); btn.disabled = false; btn.textContent = '📦 Restock'; }
+  } catch(e) { showToast('❌ Network error'); btn.disabled = false; btn.textContent = '📦 Restock'; }
+}
+
+async function adminDiscard(id, btn) {
+  btn.disabled = true; btn.textContent = '⏳...';
+  try {
+    const r = await fetch('/api/medicines/' + id + '/discard', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' });
+    const d = await r.json();
+    if (d.success) {
+      showToast('🗑️ ' + d.name + ' discarded (' + d.discarded_qty + ' units removed)');
+      const card = document.getElementById('admin-alert-' + id);
+      if (card) { card.style.opacity = '0'; card.style.transform = 'translateX(40px)'; setTimeout(() => card.remove(), 300); }
+      adminAlertsLoaded = false; adminInvLoaded = false;
+      setTimeout(() => loadAdminAlerts(), 400);
+      loadAdminStats();
+    } else { showToast('❌ ' + (d.error||'Failed')); btn.disabled = false; btn.textContent = '🗑️ Discard'; }
+  } catch(e) { showToast('❌ Network error'); btn.disabled = false; btn.textContent = '🗑️ Discard'; }
+}
+
+// ── Reports section (lazy-loaded)
+let adminReportsLoaded = false;
+async function loadAdminReports() {
+  if (adminReportsLoaded) return;
+  try {
+    const [valR, medsR] = await Promise.all([fetch('/api/stock-valuation'), fetch('/api/medicines?per_page=200')]);
+    const valD = await valR.json(), medsD = await medsR.json();
+    document.getElementById('rpt-stock-val').textContent = '₹' + (valD.stock_valuation||0).toLocaleString('en-IN',{minimumFractionDigits:2});
+    const cats = {}; (medsD.data||[]).forEach(m => { const c = m.category||'Uncategorized'; cats[c] = (cats[c]||0) + m.quantity; });
+    const body = document.getElementById('admin-report-body');
+    body.innerHTML = Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,q]) =>
+      `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(148,163,184,.08);font-size:.88rem"><span style="color:var(--white);font-weight:500">${c}</span><span style="color:var(--accent2);font-weight:700">${q} units</span></div>`
+    ).join('') || '<div class="empty-state">No data</div>';
+    adminReportsLoaded = true;
+  } catch(e) { console.error(e); }
+}
+
+// ── React to section changes
+document.addEventListener('sectionChanged', e => {
+  if (e.detail.section === 'inventory') loadAdminInventory();
+  if (e.detail.section === 'alerts') loadAdminAlerts();
+  if (e.detail.section === 'reports') loadAdminReports();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,75 @@
+# CodeCure — Smart Medical Inventory Management System
+## Detailed Technical & Feature Report
+
+### 1. Technology Stack
+*   **Core Backend:** Python 3.11 with Flask Framework
+*   **Database:** SQLite (Relational database for inventory and activity logs)
+*   **Frontend UI/UX:** HTML5, Vanilla CSS3 (Glassmorphic Design System), Vanilla JavaScript (ES6+)
+*   **AI Integration:** Google Gemini AI (gemini-2.5-flash) for medical assistance
+*   **Analytics:** Chart.js (Interactive dashboards and reports)
+*   **Authentication:** Werkzeug Security (Password hashing and session management)
+*   **Mobile/PWA:** Progressive Web App (Service Workers, Manifest)
+*   **Deployment:** Google App Engine (app.yaml), Render (render.yaml), Gunicorn (WSGI)
+
+---
+
+### 2. Core Features
+
+#### A. Advanced Dashboard (Real-time Analytics)
+*   **Live Statistics:** Dynamic counters for Total Medicines, In Stock, Low Stock, and Expired items.
+*   **Visual Reports:** Bar charts showing stock by category and doughnut charts for inventory health.
+*   **Recent Activity Log:** Tracks system actions (logins, sales, inventory edits) with timestamps.
+*   **Quick Actions:** Shortcut tiles for rapid navigation to core tasks.
+
+#### B. Inventory Management System
+*   **Full CRUD Operations:** Add, Edit, View, and Delete medicines.
+*   **Smart Filtering:** One-click tabs for "All", "Low Stock", "Expiring Soon", and "Expired".
+*   **Dynamic Search:** Real-time search by medicine name, category, or supplier.
+*   **Sorting:** Multi-column sorting (Name, Price, Quantity, Expiry) with interactive table headers.
+*   **Stock Safeguards:** Automatic color-coded status badges (OK, Low, Expired).
+
+#### C. Billing & Point of Sale (POS)
+*   **Integrated Cart:** Search and add medicines to a virtual cart for checkout.
+*   **Live Stock Validation:** Prevents sales if stock is insufficient.
+*   **Automated Inventory Updates:** Quantities are automatically deducted upon successful checkout.
+*   **Transaction Logging:** Every sale generates a unique invoice number and is logged in activity logs.
+
+#### D. MediBot — AI Medical Assistant
+*   **Context-Aware Chat:** Gemini-powered chatbot that knows the *exact* real-time state of the inventory.
+*   **Medical Consultation:** Symptom-based analysis tool that provides home care tips and severity warnings.
+*   **Doctor Directory:** Suggests relevant specialists based on user symptoms.
+*   **Conversational UI:** Multi-tab chat interface (MediBot, Consult, Doctors) with markdown support.
+
+#### E. Reporting & Exports
+*   **Financial Overview:** Automated stock valuation (Total assets in INR).
+*   **CSV Exports:** Downloadable inventory and alert reports for spreadsheet analysis.
+*   **PDF/Text Reports:** Formatted summaries for offline documentation.
+
+---
+
+### 3. Design Aesthetics & UI
+*   **Glassmorphic UI:** Ultra-modern interface with frosted glass effects, backdrop blurs, and vibrant gradients.
+*   **Six Premium Themes:**
+    1. Teal Surge (Default)
+    2. Violet Nebula
+    3. Sunset Blaze
+    4. Ocean Depths
+    5. Rose Gold
+    6. Emerald Forest
+*   **Interactive Motion:** 3D magnetic hover effects on cards, floating particles, and fluid page transitions.
+*   **Fully Responsive:** Optimized for Mobile, Tablet, and Desktop with a custom hamburger menu.
+
+---
+
+### 4. User Roles & Security
+*   **Admin:** Full access (Management, Deletion, POS, Settings).
+*   **Pharmacist:** Inventory management and POS access.
+*   **Doctor:** View-only access to stock and reports.
+*   **Secure Auth:** Password-protected accounts with role-based permission gating.
+
+---
+
+### 5. Deployment & Scalability
+*   **Cloud Ready:** Configured for Google Cloud App Engine with automatic scaling.
+*   **Offline Ready:** PWA features allow the interface to be cached for faster loading and basic offline access.
+*   **Modern Environment:** Virtual environment setup (`.venv`) with managed dependencies (`requirements.txt`).
