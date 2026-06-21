@@ -17,7 +17,11 @@ class Config:
     SECRET_KEY = _secret or secrets.token_hex(32)
     
     # SQLAlchemy Configuration
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", f"sqlite:///{os.path.join(BASE_DIR, 'codecure.db')}")
+    db_url = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
+    if db_url and db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    
+    SQLALCHEMY_DATABASE_URI = db_url or f"sqlite:///{os.path.join(BASE_DIR, 'codecure.db')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Legacy SQLite Configuration
