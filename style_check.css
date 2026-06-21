@@ -1,41 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content="CodeCure — Smart Medical Inventory Management System"/>
-<meta name="theme-color" content="#0d9488"/>
-<title>CodeCure — {% block title %}Dashboard{% endblock %}</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo_icon.png') }}"/>
-<style>
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  
-  .nav-item i,
-  .nav-link i {
-      width: 20px;
-      min-width: 20px;
-      font-size: 18px;
-      text-align: center;
-  }
-  .nav-item,
-  .nav-link {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-  }
-
-  /* Branding Classes */
-  .logo-xs { height: 24px; width: auto; object-fit: contain; }
-  .logo-sm { height: 32px; width: auto; object-fit: contain; }
-  .logo-md { height: 48px; width: auto; object-fit: contain; }
-  .logo-lg { height: 64px; width: auto; object-fit: contain; }
-  .loading-brand-icon { animation: float-pulse 1.5s ease-in-out infinite; }
-  @keyframes float-pulse {
-    0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
-    50% { transform: translateY(-3px) scale(1.05); opacity: 1; }
-  }
 
   :root {
     --bg-body: #0F172A;
@@ -122,7 +86,6 @@
     display: flex; 
     flex-direction: column;
     position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
-    overflow-y: auto;
   }
   
   .sidebar-logo { 
@@ -202,6 +165,13 @@
     color: #FFFFFF; 
     font-weight: 600; 
   }
+  
+  .nav-item .nav-icon { 
+    font-size: 0; /* Hide emoji */
+    width: 20px; height: 20px; 
+    background-color: currentColor;
+    display: block;
+  }
   .nav-badge { margin-left: auto; background: var(--red); color: #fff; border-radius: 12px; padding: 2px 8px; font-size: 0.7rem; font-weight: 600; }
 
   .sidebar-footer { 
@@ -226,13 +196,25 @@
 
   .btn-logout {
     display: flex; align-items: center; gap: 8px; 
-    width: 100%; padding: 12px; border-radius: 8px;
-    background: transparent; border: 1px solid var(--border-color);
-    color: var(--text-secondary); cursor: pointer; 
-    font-size: 0.9rem; font-weight: 600; transition: all 0.2s; text-decoration: none;
-    justify-content: center;
+    width: 100%; padding: 8px; 
+    background: transparent; border: none;
+    color: #475569; cursor: pointer; 
+    font-size: 0; font-weight: 500; transition: all 0.2s; text-decoration: none;
   }
-  .btn-logout:hover { background: rgba(225, 29, 72, 0.1); color: var(--red); border-color: rgba(225, 29, 72, 0.3); }
+  .btn-logout:hover { color: #0F172A; }
+  .btn-logout::before {
+    content: "Logout";
+    font-size: 0.9rem;
+  }
+  /* Pseudo Support Link */
+  .btn-logout::after {
+    content: "Support";
+    position: absolute;
+    top: -36px;
+    left: 8px;
+    font-size: 0.9rem;
+    color: #475569;
+  }
 
   /* ═══ MAIN ═══ */
   .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; position: relative; z-index: 10; background: var(--bg-body); }
@@ -242,7 +224,6 @@
     padding: 40px 40px 24px 40px;
     display: flex; align-items: flex-start; justify-content: space-between;
     position: sticky; top: 0; z-index: 50;
-    max-width: 1650px; margin: 0 auto; width: 100%;
   }
   
   .topbar-title { 
@@ -272,7 +253,7 @@
     filter: grayscale(1);
   }
 
-  .content { padding: 0 40px 40px 40px; flex: 1; max-width: 1650px; margin: 0 auto; width: 100%; }
+  .content { padding: 0 40px 40px 40px; flex: 1; }
 
   /* ═══ SHARED COMPONENTS ═══ */
   .welcome-banner { display: none; } /* Hide welcome banner entirely based on mockups */
@@ -410,180 +391,3 @@
   }
 
 {% block extra_css %}{% endblock %}
-  /* ═══ PRINT STYLES ═══ */
-  @media print {
-    body { background: white !important; color: black !important; }
-    .sidebar, .topbar, .theme-switcher, .hamburger, .btn { display: none !important; }
-    .main { margin-left: 0 !important; background: white !important; padding: 0 !important; }
-    .card { box-shadow: none !important; border: 1px solid #ccc !important; break-inside: avoid; }
-    .print-header { 
-      display: flex !important; 
-      align-items: center; 
-      gap: 16px; 
-      margin-bottom: 24px; 
-      padding-bottom: 12px; 
-      border-bottom: 2px solid #000; 
-    }
-    .print-header img { 
-      height: 40px; 
-      filter: grayscale(100%); 
-    }
-    .print-header h1 {
-      font-size: 24px;
-      margin: 0;
-      color: black;
-    }
-  }
-</style>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-</head>
-<body>
-<!-- Ambient Background -->
-<div class="orb orb1"></div>
-<div class="orb orb2"></div>
-<div class="orb orb3"></div>
-<div class="particles" id="particles"></div>
-
-<!-- ═══ SIDEBAR ═══ -->
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-logo" style="padding: 32px 24px 24px 24px; display: flex; align-items: center; gap: 12px; flex-direction: row;">
-    <img src="{{ url_for('static', filename='images/logo_icon.png') }}" class="logo-sm" alt="CC+">
-    <div style="display: flex; flex-direction: column;">
-      <span style="font-size: 1.6rem; font-weight: 700; color: var(--text-primary); line-height: 1;">CodeCure</span>
-      <span style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">Smart Medical Inventory</span>
-    </div>
-  </div>
-  <div class="sidebar-user">
-    <div class="u-role">{{ role }}</div>
-    <div class="u-name">{{ user }}</div>
-  </div>
-  <nav>
-    <div class="nav-section">Main Menu</div>
-    {% block sidebar_nav %}{% endblock %}
-    <div class="nav-section" style="display:block; margin-top: auto;">Appearance</div>
-    <div class="theme-switcher">
-      <div class="theme-dot td-sapphire active" data-theme="default" onclick="setTheme('default')" title="Executive Sapphire"></div>
-      <div class="theme-dot td-whitegold" data-theme="white-gold" onclick="setTheme('white-gold')" title="Royal White-Gold"></div>
-      <div class="theme-dot td-monochrome" data-theme="white-black" onclick="setTheme('white-black')" title="High-Contrast Monochrome"></div>
-      <div class="theme-dot td-clinical" data-theme="white-orange" onclick="setTheme('white-orange')" title="Clinical White-Orange"></div>
-      <div class="theme-dot td-wbgold" data-theme="white-black-gold" onclick="setTheme('white-black-gold')" title="Executive White-Black-Gold"></div>
-    </div>
-  </nav>
-  <div class="sidebar-footer">
-    <a class="btn-logout" href="/logout"><i class="fas fa-right-from-bracket"></i> Logout</a>
-  </div>
-</aside>
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-
-<!-- ═══ MAIN ═══ -->
-<div class="main">
-  <div class="print-header" style="display: none;">
-    <img src="{{ url_for('static', filename='images/logo_icon.png') }}" alt="CC+">
-    <div>
-      <h1>CodeCure Smart Medical Inventory</h1>
-      <p>Generated Report</p>
-    </div>
-  </div>
-  <div class="topbar">
-    <button class="hamburger" onclick="toggleSidebar()">
-      <span></span><span></span><span></span>
-    </button>
-      <div class="topbar-title" style="display: flex; align-items: center; gap: 12px; flex-direction: row;">
-        <img src="{{ url_for('static', filename='images/logo_icon.png') }}" class="logo-xs" alt="CC+">
-        <div style="display: flex; flex-direction: column;">
-          {% block topbar_title %}Dashboard{% endblock %}
-        </div>
-      </div>
-    <div class="topbar-right">
-      <div class="clock" id="clock">--:--:--</div>
-      {% block topbar_actions %}{% endblock %}
-    </div>
-  </div>
-  <div class="content">
-    {% block content %}{% endblock %}
-  </div>
-</div>
-
-<!-- Toast -->
-<div class="toast" id="toast"></div>
-
-<script>
-// ── Theme
-function setTheme(t) {
-  document.documentElement.setAttribute('data-theme', t);
-  localStorage.setItem('codecure-theme', t);
-  document.querySelectorAll('.tdot').forEach(d => d.classList.toggle('active', d.dataset.t === t));
-}
-(function() { const s = localStorage.getItem('codecure-theme'); if (s) setTheme(s); })();
-
-// ── Clock
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-}
-setInterval(updateClock, 1000); updateClock();
-
-// ── Sidebar toggle
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('open');
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('open');
-}
-
-// ── Particles
-(function() {
-  const c = document.getElementById('particles');
-  for (let i = 0; i < 25; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    p.style.left = Math.random()*100+'%';
-    p.style.animationDuration = (8+Math.random()*12)+'s';
-    p.style.animationDelay = Math.random()*8+'s';
-    p.style.width = p.style.height = (2+Math.random()*3)+'px';
-    c.appendChild(p);
-  }
-})();
-
-// ── Toast
-function showToast(msg, duration=3000) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
-}
-
-// ── Section Switching (used by sidebar nav items)
-function showSection(sectionId, navEl) {
-  // Hide all sections
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  // Show target section
-  const target = document.getElementById('sec-' + sectionId);
-  if (target) target.classList.add('active');
-  // Update active nav item
-  if (navEl) {
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    navEl.classList.add('active');
-  }
-  // Close mobile sidebar
-  closeSidebar();
-  // Scroll to top
-  document.querySelector('.content').scrollTop = 0;
-  window.scrollTo(0, 0);
-  // Fire custom event so child pages can react (e.g. lazy-load data)
-  document.dispatchEvent(new CustomEvent('sectionChanged', { detail: { section: sectionId } }));
-}
-
-// ── Debounce Utility
-function debounce(func, wait) {
-  let timeout;
-  return function(...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
-}
-</script>
-{% block extra_js %}{% endblock %}
-</body>
-</html>

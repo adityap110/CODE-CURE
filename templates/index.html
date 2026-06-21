@@ -1450,7 +1450,7 @@ tr:hover td {
               </tr>
             </thead>
             <tbody id="med-tbody">
-              <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px">Loading…</td></tr>
+              <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px"><div style="display:flex; justify-content:center; align-items:center; gap:12px; padding:20px;"><img src="{{ url_for('static', filename='images/logo_icon.png') }}" class="loading-brand-icon logo-xs"> <span style="color:var(--text-secondary);font-weight:500">Loading CodeCure...</span></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -2072,7 +2072,8 @@ function changePage(delta) {
 
 // ── CHART ──
 async function loadCategoryChart() {
-  const r = await fetch('/api/chart/category'); const data = await r.json();
+  const r = await fetch('/api/chart/category'); let data = await r.json();
+  if(data && !Array.isArray(data) && data.data) { data = data.data; }
   const labels = data.map(d=>d.category||'Other');
   const vals   = data.map(d=>d.total);
   const colors = getThemeChartColors();
@@ -2337,7 +2338,8 @@ async function sendChat() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: msg, history: chatHistory.slice(-10) })
     });
-    const data = await r.json();
+    let data = await r.json();
+  if(data && !Array.isArray(data) && data.data) { data = data.data; }
     setTimeout(() => {
       removeTyping();
       const reply = data.reply || 'Sorry, something went wrong.';
@@ -2407,7 +2409,8 @@ async function sendConsult() {
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ symptoms: combined, severity: currentSeverity })
     });
-    const data = await r.json();
+    let data = await r.json();
+  if(data && !Array.isArray(data) && data.data) { data = data.data; }
     setTimeout(() => {
       let html = (data.reply || 'No response received.')
         .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')

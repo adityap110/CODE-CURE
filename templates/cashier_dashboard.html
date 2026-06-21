@@ -1,27 +1,22 @@
 {% extends "base.html" %}
 
 {% block title %}Cashier Dashboard{% endblock %}
-{% block topbar_title %}🛒 Cashier Dashboard{% endblock %}
+{% block topbar_title %}<i class="fas fa-cash-register"></i> Cashier Dashboard{% endblock %}
 
 {% block sidebar_nav %}
 <div class="nav-item active" onclick="showSection('dashboard', this)">
-  <span class="nav-icon">🛒</span> POS Terminal
+  <i class="fas fa-cash-register"></i> POS Terminal
 </div>
 <div class="nav-item" onclick="showSection('inventory', this)">
-  <span class="nav-icon">💊</span> Browse Inventory
+  <i class="fas fa-boxes"></i> Browse Inventory
 </div>
 <div class="nav-item" onclick="showSection('alerts', this)">
-  <span class="nav-icon">🔔</span> Alerts
+  <i class="fas fa-bell"></i> Alerts
 </div>
 {% endblock %}
 
 {% block extra_css %}
 :root { --topbar-sub: "Scan items or search database to add to current order."; }
-
-/* ═══ SIDEBAR ICONS ═══ */
-.nav-item:nth-child(1) .nav-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>') no-repeat center; }
-.nav-item:nth-child(2) .nav-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>') no-repeat center; }
-.nav-item:nth-child(3) .nav-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>') no-repeat center; }
 
 /* ═══ POS LAYOUT ═══ */
 .pos-layout { display:grid; grid-template-columns:1fr 380px; gap:24px; }
@@ -190,8 +185,11 @@ tr:hover td { background: var(--bg-body); }
   <div style="animation:scaleUp .6s .15s cubic-bezier(.16,1,.3,1) backwards">
     <div class="search-row">
       <input type="text" class="search-box" id="posSearch" placeholder="🔍 Search medicines by name, category, or supplier..." oninput="searchProducts()"/>
+      <button class="scan-btn" onclick="openScannerModal(handleCashierScan)" style="background:var(--accent-primary)">
+        📷 Scan Barcode
+      </button>
       <button class="scan-btn" id="scanItemBtn" onclick="document.getElementById('scanItemInput').click()">
-        📷 Scan Item
+        📄 Scan Prescription
         <span class="scan-spinner"></span>
       </button>
       <input type="file" id="scanItemInput" accept="image/*" capture="environment" style="display:none"/>
@@ -240,7 +238,7 @@ tr:hover td { background: var(--bg-body); }
   <div class="card">
     <div class="card-header"><div class="card-title">💊 Browse Inventory</div></div>
     <div class="card-body" id="cash-inv-body">
-      <div class="empty-state"><div class="empty-icon">💊</div>Loading…</div>
+      <div class="empty-state" style="padding:40px;"><img src="{{ url_for('static', filename='images/logo_icon.png') }}" class="loading-brand-icon logo-sm" style="margin-bottom:16px;" alt="CC+"><br><span style="font-size:1.1rem;font-weight:500;color:var(--text-secondary)">Loading CodeCure...</span></div>
     </div>
   </div>
 </div>
@@ -250,7 +248,7 @@ tr:hover td { background: var(--bg-body); }
   <div class="card">
     <div class="card-header"><div class="card-title">⚠️ Active Alerts</div></div>
     <div class="card-body" id="cash-alerts">
-      <div class="empty-state"><div class="empty-icon">🔔</div>Loading alerts…</div>
+      <div class="empty-state" style="padding:40px;"><img src="{{ url_for('static', filename='images/logo_icon.png') }}" class="loading-brand-icon logo-sm" style="margin-bottom:16px;" alt="CC+"><br><span style="font-size:1.1rem;font-weight:500;color:var(--text-secondary)">Loading CodeCure...</span></div>
     </div>
   </div>
 </div>
@@ -329,19 +327,46 @@ async function clearCart() {
 }
 
 async function checkout() {
+  const btn = document.getElementById('checkoutBtn');
+  btn.disabled = true; btn.innerHTML = 'Processing...';
   try {
-    const r = await fetch('/api/checkout', {method:'POST'});
+    const r = await fetch('/api/checkout', { method:'POST' });
     const d = await r.json();
     if (d.success) {
-      document.getElementById('invNo').textContent = d.invoice + ' • ' + d.date;
-      document.getElementById('invItems').innerHTML = d.items.map(i =>
-        `<div class="inv-row"><span>${i.name} × ${i.qty}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`
-      ).join('');
-      document.getElementById('invTotal').textContent = '₹' + d.total.toFixed(2);
+      document.getElementById('invNo').textContent = 'Invoice: ' + d.invoice;
       document.getElementById('invoiceModal').classList.add('open');
-      loadCart(); loadProducts();
-    } else showToast('❌ ' + (d.error||'Checkout failed'));
+      loadCart();
+      if(typeof loadCatalog === 'function') loadCatalog();
+      if(typeof loadInventory === 'function') loadInventory();
+      if(typeof loadActivity === 'function') loadActivity();
+      if(typeof loadAlerts === 'function') loadAlerts();
+    } else {
+      if (d.fefo_details) {
+        showToast(`❌ Cannot checkout ${d.fefo_details.medicine_name}: Requested ${d.fefo_details.requested_qty}, but only ${d.fefo_details.available_non_expired_qty} unexpired available (${d.fefo_details.expired_qty} expired).`);
+      } else {
+        showToast('❌ ' + (d.error||'Checkout failed'));
+      }
+    }
   } catch(e) { showToast('❌ Network error'); }
+  finally { btn.disabled = false; btn.innerHTML = '💳 Process Checkout'; }
+}
+function printInvoice() {
+  const inv = document.getElementById('invNo').textContent.replace('Invoice: ','');
+  window.open('/api/invoice/'+inv+'/pdf', '_blank');
+}
+
+// ── Scanner Callback ──
+function handleCashierScan(data, rawText) {
+  if (data.type === 'medicine') {
+    addToCart(data.medicine.id);
+  } else if (data.type === 'multiple_matches') {
+    document.getElementById('posSearch').value = rawText;
+    searchProducts();
+    showToast('Multiple matches found. Select from the list.');
+  } else if (data.type === 'batch') {
+    // If it's a batch QR, still add to cart based on medicine ID
+    addToCart(data.medicine.id);
+  }
 }
 
 function closeInvoice() { document.getElementById('invoiceModal').classList.remove('open'); }
@@ -375,9 +400,17 @@ document.getElementById('scanItemInput').addEventListener('change', async functi
     const result = await response.json();
 
     if (!response.ok) {
-      showToast('❌ ' + (result.error || 'Scan failed'));
-      btn.innerHTML = origHTML; btn.disabled = false; btn.classList.remove('loading');
-      e.target.value = '';
+      showToast('⚠️ OCR Failed: ' + (result.error || 'Scan failed'));
+      btn.innerHTML = '<span style="color:var(--red);">⚠️ OCR Failed. Try Again or Search Manually ↘</span>';
+      btn.disabled = false; btn.classList.remove('loading');
+      // Preserve uploaded image (do not clear e.target.value)
+      // Focus manual search bar
+      const searchInput = document.getElementById('posSearch');
+      if (searchInput) {
+          searchInput.focus();
+          searchInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.3)';
+          setTimeout(() => searchInput.style.boxShadow = '', 2000);
+      }
       return;
     }
 
@@ -475,4 +508,6 @@ document.addEventListener('sectionChanged', e => {
   if (e.detail.section === 'alerts') loadCashAlerts();
 });
 </script>
+
+{% include 'scanner_modal.html' %}
 {% endblock %}

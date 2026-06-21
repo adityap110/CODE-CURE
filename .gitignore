@@ -1,4 +1,4 @@
-venv/
+.venv/
 __pycache__/
 *.pyc
 *.pyo
@@ -10,3 +10,6 @@ dist/
 build/
 .DS_Store
 Thumbs.db
+codecure.db
+codecure.db-shm
+codecure.db-wal

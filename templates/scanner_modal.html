@@ -1,0 +1,141 @@
+<!-- Scanner Modal -->
+<div class="modal-overlay" id="scannerModal">
+  <div class="modal" style="max-width: 500px; padding: 24px;">
+    <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:16px; margin-bottom:16px;">
+      <div style="font-size:1.2rem; font-weight:600; color:var(--text-primary);">📷 Scan Barcode / QR</div>
+      <button class="modal-close" onclick="closeScannerModal()" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.5rem; line-height:1;">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Camera Feed -->
+      <div id="reader" style="width: 100%; min-height: 300px; border-radius: 12px; overflow: hidden; background: #000; display:flex; justify-content:center; align-items:center; color:#fff;">
+        Initializing camera...
+      </div>
+      
+      <!-- Manual Entry -->
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border-color);">
+        <label for="manualBarcode" style="display:block; font-size:0.85rem; color:var(--text-secondary); margin-bottom:8px; font-weight:500;">Manual Entry (Fallback / Desktop Testing)</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="manualBarcode" placeholder="Enter barcode or ID..." style="flex:1; padding:10px 14px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-primary); outline:none;">
+          <button onclick="submitManualBarcode()" class="btn btn-primary" style="padding:10px 16px; border-radius:8px; border:none; background:var(--accent-secondary); color:#fff; cursor:pointer; font-weight:600;">Lookup</button>
+        </div>
+      </div>
+      
+      <!-- Scan Result/Error Display -->
+      <div id="scanFeedback" style="margin-top:16px; padding:12px; border-radius:8px; display:none; font-size:0.9rem; text-align:center;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+  let html5QrcodeScanner = null;
+  // This variable stores the specific callback for when a barcode is resolved.
+  // It allows different dashboards (Admin, Pharmacist, Cashier) to do different things with the data.
+  let onScanSuccessCallback = null; 
+
+  function openScannerModal(callback) {
+    onScanSuccessCallback = callback;
+    document.getElementById('scannerModal').classList.add('active', 'open');
+    document.getElementById('scanFeedback').style.display = 'none';
+    document.getElementById('manualBarcode').value = '';
+    
+    startCamera();
+  }
+  
+  function closeScannerModal() {
+    document.getElementById('scannerModal').classList.remove('active', 'open');
+    if (html5QrcodeScanner) {
+      try {
+        html5QrcodeScanner.stop().then(() => {
+          html5QrcodeScanner.clear();
+        }).catch(err => {
+          console.error("Failed to stop scanner", err);
+        });
+      } catch(e) {}
+    }
+  }
+  
+  function startCamera() {
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+    .catch((err) => {
+      // If environment camera fails (e.g. desktop), try any camera
+      console.warn("Environment camera failed, trying default.", err);
+      html5QrcodeScanner.start({ facingMode: "user" }, config, onScanSuccess)
+      .catch((err2) => {
+        showScanFeedback("Camera error: " + err2, "error");
+        document.getElementById("reader").innerHTML = "Camera permission denied or no camera found.";
+      });
+    });
+  }
+
+  function onScanSuccess(decodedText, decodedResult) {
+    // Stop scanning once we get a hit to prevent multiple hits
+    html5QrcodeScanner.pause();
+    resolveBarcode(decodedText);
+  }
+
+  function submitManualBarcode() {
+    const val = document.getElementById('manualBarcode').value.trim();
+    if (!val) return;
+    resolveBarcode(val);
+  }
+
+  async function resolveBarcode(barcodeText) {
+    showScanFeedback("Looking up barcode: " + barcodeText + "...", "info");
+    try {
+      const res = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ barcode: barcodeText })
+      });
+      const data = await res.json();
+      
+      if (data.error) {
+        showScanFeedback(data.error, "error");
+        if (html5QrcodeScanner && html5QrcodeScanner.getState() === 2 /* PAUSED */) {
+            setTimeout(() => html5QrcodeScanner.resume(), 500); // Resume after 500ms
+        }
+        return;
+      }
+      
+      showScanFeedback("Success! Routing...", "success");
+      
+      // Close modal and pass data to caller
+      setTimeout(() => {
+        closeScannerModal();
+        if (onScanSuccessCallback) {
+          onScanSuccessCallback(data, barcodeText);
+        }
+      }, 500);
+      
+    } catch(err) {
+      console.error(err);
+      showScanFeedback("Network error looking up barcode.", "error");
+      if (html5QrcodeScanner && html5QrcodeScanner.getState() === 2) {
+          setTimeout(() => html5QrcodeScanner.resume(), 500);
+      }
+    }
+  }
+
+  function showScanFeedback(msg, type) {
+    const box = document.getElementById('scanFeedback');
+    box.style.display = 'block';
+    box.textContent = msg;
+    if (type === 'error') {
+      box.style.background = 'rgba(239, 68, 68, 0.1)';
+      box.style.color = '#ef4444';
+      box.style.border = '1px solid #ef4444';
+    } else if (type === 'success') {
+      box.style.background = 'rgba(16, 185, 129, 0.1)';
+      box.style.color = '#10b981';
+      box.style.border = '1px solid #10b981';
+    } else {
+      box.style.background = 'rgba(59, 130, 246, 0.1)';
+      box.style.color = '#3b82f6';
+      box.style.border = '1px solid #3b82f6';
+    }
+  }
+</script>

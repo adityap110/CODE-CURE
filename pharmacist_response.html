@@ -1,29 +1,410 @@
-{% extends "base.html" %}
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="CodeCure — Smart Medical Inventory Management System"/>
+<meta name="theme-color" content="#0d9488"/>
+<title>CodeCure — Pharmacist Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-{% block title %}Pharmacist Dashboard{% endblock %}
-{% block topbar_title %}💊 Pharmacist Dashboard{% endblock %}
+  :root {
+    --bg-body: #0F172A;
+    --bg-card: #1E293B;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --accent-primary: #D97706;
+    --accent-secondary: #0D9488;
+    --border-color: rgba(255, 255, 255, 0.05);
+    --shadow-style: 0 10px 30px rgba(0, 0, 0, 0.4);
+    --sidebar-bg: #1E293B;
+    --red: #E11D48;
+    --green: #10B981;
+    --sidebar-w: 260px;
+    --topbar-sub: "";
+  }
 
-{% block sidebar_nav %}
-<div class="nav-item active" onclick="showSection('dashboard', this)">
-  <i class="fas fa-home"></i> Dashboard
-</div>
-<div class="nav-item" onclick="showSection('inventory', this)">
-  <i class="fas fa-box"></i> Inventory
-</div>
-<div class="nav-item" onclick="showSection('alerts', this)">
-  <i class="fas fa-bell"></i> Alerts
-</div>
-<!-- DEPRECATED (UX-R1): <div class="nav-item" onclick="showSection('prescription', this)">
-  <i class="fas fa-file-medical"></i> Prescriptions
-</div> -->
-{% endblock %}
+  [data-theme="white-gold"] {
+    --bg-body: #F8FAFC;
+    --bg-card: #FFFFFF;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --accent-primary: #B45309;
+    --accent-secondary: #0D9488;
+    --border-color: #E2E8F0;
+    --shadow-style: 0 10px 25px rgba(0, 0, 0, 0.05);
+    --sidebar-bg: #F4F7FB;
+  }
 
-{% block topbar_actions %}
-<button class="btn btn-primary" onclick="openAddModal()">＋ Add Medicine</button>
-{% endblock %}
+  [data-theme="white-black"] {
+    --bg-body: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --accent-primary: #000000;
+    --accent-secondary: #000000;
+    --border-color: #000000;
+    --shadow-style: none;
+    --sidebar-bg: #FFFFFF;
+  }
 
-{% block extra_css %}
+  [data-theme="white-orange"] {
+    --bg-body: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --accent-primary: #EA580C;
+    --accent-secondary: #0D9488;
+    --border-color: #E2E8F0;
+    --shadow-style: 0 10px 25px rgba(0, 0, 0, 0.05);
+    --sidebar-bg: #F4F7FB;
+  }
+
+  [data-theme="white-black-gold"] {
+    --bg-body: #FFFFFF;
+    --bg-card: #FFFFFF;
+    --text-primary: #1E293B;
+    --text-secondary: #475569;
+    --accent-primary: #EAB308;
+    --accent-secondary: #000000;
+    --border-color: #000000;
+    --shadow-style: 0 10px 25px rgba(0, 0, 0, 0.05);
+    --sidebar-bg: #FFFFFF;
+  }
+
+  /* ═══ AMBIENT BACKGROUND ═══ */
+  body::before, body::after, .orb, .particles, .geo-shape { display: none; }
+
+  html { scroll-behavior: smooth; }
+  body { 
+    background: var(--bg-body); 
+    color: var(--text-primary); 
+    font-family: 'Inter', sans-serif; 
+    display: flex; 
+    min-height: 100vh; 
+  }
+
+  /* ═══ SIDEBAR ═══ */
+  .sidebar {
+    width: var(--sidebar-w); 
+    flex-shrink: 0;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex; 
+    flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+  }
+  
+  .sidebar-logo { 
+    padding: 32px 24px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: flex-start;
+  }
+  
+  .logo-icon-sm {
+    font-size: 0;
+    width: 40px; height: 40px;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .logo-icon-sm::before { content: ""; position: absolute; top: 10px; bottom: 10px; left: 18px; width: 2px; background: #0F766E; }
+  .logo-icon-sm::after { content: ""; position: absolute; left: 10px; right: 10px; top: 18px; height: 2px; background: #0F766E; }
+
+  .logo-text { font-size: 0; color: transparent; }
+  .logo-text span { display: none; }
+  .logo-text::before {
+    content: "CodeCure";
+    white-space: pre-wrap;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #0F766E;
+    display: block;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+  .logo-text::after {
+    content: "Smart Medical Inventory";
+    font-size: 0.8rem;
+    color: #64748B;
+    display: block;
+    margin-top: 12px;
+    font-weight: 400;
+  }
+
+  .sidebar-user, .nav-section, .theme-picker { display: none; }
+
+  nav { flex: 1; padding: 0 16px; margin-top: 16px;  }
+  
+  /* Skeleton Loader */
+  .skeleton {
+    background: linear-gradient(90deg, var(--border-color) 25%, var(--bg-card) 50%, var(--border-color) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+    height: 1.2rem;
+    display: inline-block;
+    width: 100%;
+  }
+  @keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 12px; 
+    padding: 12px 16px; 
+    border-radius: 8px;
+    color: var(--text-secondary); 
+    font-size: 0.9rem; 
+    font-weight: 500; 
+    cursor: pointer;
+    transition: all 0.2s; 
+    margin-bottom: 6px; 
+    text-decoration: none;
+  }
+  .nav-item:hover { background: rgba(255, 255, 255, 0.1); color: var(--accent-primary); }
+  .nav-item.active { 
+    background: var(--accent-primary); 
+    color: #FFFFFF; 
+    font-weight: 600; 
+  }
+  
+  .nav-item .nav-icon { 
+    font-size: 0; /* Hide emoji */
+    width: 20px; height: 20px; 
+    background-color: currentColor;
+    display: block;
+  }
+  .nav-badge { margin-left: auto; background: var(--red); color: #fff; border-radius: 12px; padding: 2px 8px; font-size: 0.7rem; font-weight: 600; }
+
+  .sidebar-footer { 
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-footer::before {
+    content: "⚠  Emergency Alert";
+    background: #E11D48;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: background 0.2s;
+  }
+  .sidebar-footer::before:hover { background: #BE123C; }
+
+  .btn-logout {
+    display: flex; align-items: center; gap: 8px; 
+    width: 100%; padding: 8px; 
+    background: transparent; border: none;
+    color: #475569; cursor: pointer; 
+    font-size: 0; font-weight: 500; transition: all 0.2s; text-decoration: none;
+  }
+  .btn-logout:hover { color: #0F172A; }
+  .btn-logout::before {
+    content: "Logout";
+    font-size: 0.9rem;
+  }
+  /* Pseudo Support Link */
+  .btn-logout::after {
+    content: "Support";
+    position: absolute;
+    top: -36px;
+    left: 8px;
+    font-size: 0.9rem;
+    color: #475569;
+  }
+
+  /* ═══ MAIN ═══ */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; position: relative; z-index: 10; background: var(--bg-body); }
+  
+  .topbar {
+    background: var(--bg-body);
+    padding: 40px 40px 24px 40px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  
+  .topbar-title { 
+    font-family: 'Inter', sans-serif; 
+    font-size: 2rem; 
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+  }
+  .topbar-title::after {
+    content: var(--topbar-sub, "");
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-top: 8px;
+  }
+  
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .clock { 
+    font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; 
+    border: 1px solid var(--border-color); border-radius: 20px; padding: 8px 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .clock::before {
+    content: "📅";
+    filter: grayscale(1);
+  }
+
+  .content { padding: 0 40px 40px 40px; flex: 1; }
+
+  /* ═══ SHARED COMPONENTS ═══ */
+  .welcome-banner { display: none; } /* Hide welcome banner entirely based on mockups */
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color); 
+    border-radius: 16px; 
+    overflow: hidden;
+    box-shadow: var(--shadow-style);
+  }
+  .card-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-weight: 600; font-size: 1.1rem; color: var(--text-primary); }
+  .card-body { padding: 24px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px; }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color); 
+    border-radius: 16px; 
+    padding: 24px;
+    position: relative; overflow: hidden;
+    box-shadow: var(--shadow-style);
+  }
+  .stat-num { font-family: 'DM Serif Display', serif; font-size: 2.5rem; line-height: 1; margin-bottom: 8px; color: var(--text-primary); }
+  .stat-label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+  .stat-icon { font-size: 0; width: 32px; height: 32px; position: absolute; top: 24px; left: 24px; background-color: var(--accent-secondary); }
+  
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 8px; border: none;
+    cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent-primary); color: #fff; }
+  .btn-primary:hover { opacity: 0.9; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px; z-index: 999;
+    background: var(--text-primary); border-radius: 8px;
+    padding: 14px 20px; color: var(--bg-body); font-size: 0.9rem; font-weight: 500;
+    display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-style);
+    transform: translateY(80px); opacity: 0; transition: all 0.3s; pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  .theme-switcher {
+    padding: 16px 24px;
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+  }
+  .theme-dot {
+    width: 24px; height: 24px; border-radius: 50%;
+    cursor: pointer; border: 2px solid transparent;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .theme-dot:hover { transform: scale(1.1); }
+  .theme-dot.active { border-color: var(--accent-primary); transform: scale(1.1); }
+  
+  .td-sapphire { background: #0F172A; }
+  .td-whitegold { background: #FDE68A; }
+  .td-monochrome { background: #000000; }
+  .td-clinical { background: #EA580C; }
+  .td-wbgold { background: #EAB308; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+
+  .hamburger {
+    display: none; width: 36px; height: 36px; border: none; background: #F1F5F9;
+    border-radius: 8px; cursor: pointer; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  }
+  .hamburger span { display: block; width: 18px; height: 2px; background: #0F172A; border-radius: 2px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ═══ MODALS ═══ */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg-card); padding: 32px; border-radius: 16px;
+    width: 90%; max-width: 500px; border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-style); animation: modalIn 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 24px; color: var(--text-primary); display: flex; justify-content: space-between; align-items: center; }
+  .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.2rem; }
+  .modal-close:hover { color: var(--accent-primary); }
+
+  /* ═══ FORM ELEMENTS ═══ */
+  .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .form-group label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 12px 16px; background: var(--bg-body);
+    border: 1px solid var(--border-color); border-radius: 8px;
+    color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 0.9rem;
+    outline: none; transition: all 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--accent-secondary); background: var(--bg-card);
+    box-shadow: 0 0 0 3px rgba(13,148,136,0.1);
+  }
+  .form-group input::placeholder, .form-group textarea::placeholder { color: var(--text-secondary); }
+  .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+  .btn-secondary {
+    padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border-color);
+    background: var(--bg-card); color: var(--text-secondary); cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; transition: all 0.2s;
+  }
+  .btn-secondary:hover { background: var(--bg-body); color: var(--text-primary); }
+  @media (max-width: 768px) {
+    .hamburger { display: flex; }
+    .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; }
+    .sidebar-overlay.open { display: block; }
+    .stat-grid { grid-template-columns: 1fr; }
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+    .topbar { padding: 16px; }
+  }
+
+
 :root { --topbar-sub: "Smart Scanner & Stock Overview"; }
+
+.nav-item:nth-child(1) .nav-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>') no-repeat center; }
+.nav-item:nth-child(2) .nav-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>') no-repeat center; }
+.nav-item:nth-child(3) .nav-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>') no-repeat center; }
 .nav-item:nth-child(4) .nav-icon { mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>') no-repeat center; -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>') no-repeat center; }
 
 /* ═══ SCANNER SECTION ═══ */
@@ -124,13 +505,77 @@ tr:hover td { background: var(--bg-body); }
 */
 
 @media (max-width:768px) { .form-grid { grid-template-columns:1fr; } .quick-stats { grid-template-columns:1fr; } }
-{% endblock %}
 
-{% block content %}
+</style>
+</head>
+<body>
+<!-- Ambient Background -->
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+<div class="particles" id="particles"></div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon-sm">🏥</div>
+    <div class="logo-text">Code<span>Cure</span></div>
+  </div>
+  <div class="sidebar-user">
+    <div class="u-role">Pharmacist</div>
+    <div class="u-name">pharmacist</div>
+  </div>
+  <nav>
+    <div class="nav-section">Main Menu</div>
+    
+<div class="nav-item active" onclick="showSection('dashboard', this)">
+  <span class="nav-icon">📊</span> Dashboard
+</div>
+<div class="nav-item" onclick="showSection('inventory', this)">
+  <span class="nav-icon">💊</span> Inventory
+</div>
+<div class="nav-item" onclick="showSection('alerts', this)">
+  <span class="nav-icon">🔔</span> Alerts
+</div>
+<div class="nav-item" onclick="showSection('prescription', this)">
+  <span class="nav-icon">📄</span> Prescriptions
+</div>
+
+    <div class="nav-section" style="display:block; margin-top: auto;">Appearance</div>
+    <div class="theme-switcher">
+      <div class="theme-dot td-sapphire active" data-theme="default" onclick="setTheme('default')" title="Executive Sapphire"></div>
+      <div class="theme-dot td-whitegold" data-theme="white-gold" onclick="setTheme('white-gold')" title="Royal White-Gold"></div>
+      <div class="theme-dot td-monochrome" data-theme="white-black" onclick="setTheme('white-black')" title="High-Contrast Monochrome"></div>
+      <div class="theme-dot td-clinical" data-theme="white-orange" onclick="setTheme('white-orange')" title="Clinical White-Orange"></div>
+      <div class="theme-dot td-wbgold" data-theme="white-black-gold" onclick="setTheme('white-black-gold')" title="Executive White-Black-Gold"></div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <a class="btn-logout" href="/logout">🚪 Logout</a>
+  </div>
+</aside>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="topbar-title">💊 Pharmacist Dashboard</div>
+    <div class="topbar-right">
+      <div class="clock" id="clock">--:--:--</div>
+      
+<button class="btn btn-primary" onclick="openAddModal()">＋ Add Medicine</button>
+
+    </div>
+  </div>
+  <div class="content">
+    
 <div class="section active" id="sec-dashboard">
 <!-- Welcome Banner -->
 <div class="welcome-banner" style="animation:scaleUp .6s cubic-bezier(.16,1,.3,1) backwards">
-  <div class="wb-title">Welcome back, {{ user|capitalize }}! 💊</div>
+  <div class="wb-title">Welcome back, Pharmacist! 💊</div>
   <div class="wb-sub">Manage your pharmacy inventory, scan medicines, and track stock levels.</div>
   <div class="wb-badge">🏥 Pharmacist Control Panel</div>
 </div>
@@ -224,7 +669,7 @@ tr:hover td { background: var(--bg-body); }
           </tr>
         </thead>
         <tbody id="recentMeds">
-          <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px"><div style="display:flex; justify-content:center; align-items:center; gap:12px; padding:20px;"><img src="{{ url_for('static', filename='images/logo_icon.png') }}" class="loading-brand-icon logo-xs"> <span style="color:var(--text-secondary);font-weight:500">Loading CodeCure...</span></div></td></tr>
+          <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -290,7 +735,7 @@ tr:hover td { background: var(--bg-body); }
           <th style="background:var(--glow-soft);color:var(--accent2);font-weight:600;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;text-align:left;">Expiry</th>
           <th style="background:var(--glow-soft);color:var(--accent2);font-weight:600;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:12px 14px;text-align:left;">Status</th>
         </tr></thead>
-        <tbody id="ph-inv-tbody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px"><div style="display:flex; justify-content:center; align-items:center; gap:12px; padding:20px;"><img src="{{ url_for('static', filename='images/logo_icon.png') }}" class="loading-brand-icon logo-xs"> <span style="color:var(--text-secondary);font-weight:500">Loading CodeCure...</span></div></td></tr></tbody>
+        <tbody id="ph-inv-tbody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">Loading…</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -301,7 +746,7 @@ tr:hover td { background: var(--bg-body); }
   <div class="card">
     <div class="card-header"><div class="card-title">⚠️ Active Alerts</div></div>
     <div class="card-body" id="ph-alerts">
-      <div class="empty-state" style="padding:40px;"><img src="{{ url_for('static', filename='images/logo_icon.png') }}" class="loading-brand-icon logo-sm" style="margin-bottom:16px;" alt="CC+"><br><span style="font-size:1.1rem;font-weight:500;color:var(--text-secondary)">Loading CodeCure...</span></div>
+      <div class="empty-state"><div class="empty-icon">🔔</div>Loading alerts…</div>
     </div>
   </div>
 </div><!-- /sec-alerts -->
@@ -354,9 +799,91 @@ tr:hover td { background: var(--bg-body); }
   </div>
 </div><!-- /sec-prescription -->
 -->
-{% endblock %}
 
-{% block extra_js %}
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Theme
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('codecure-theme', t);
+  document.querySelectorAll('.tdot').forEach(d => d.classList.toggle('active', d.dataset.t === t));
+}
+(function() { const s = localStorage.getItem('codecure-theme'); if (s) setTheme(s); })();
+
+// ── Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ── Sidebar toggle
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ── Particles
+(function() {
+  const c = document.getElementById('particles');
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100+'%';
+    p.style.animationDuration = (8+Math.random()*12)+'s';
+    p.style.animationDelay = Math.random()*8+'s';
+    p.style.width = p.style.height = (2+Math.random()*3)+'px';
+    c.appendChild(p);
+  }
+})();
+
+// ── Toast
+function showToast(msg, duration=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ── Section Switching (used by sidebar nav items)
+function showSection(sectionId, navEl) {
+  // Hide all sections
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  // Show target section
+  const target = document.getElementById('sec-' + sectionId);
+  if (target) target.classList.add('active');
+  // Update active nav item
+  if (navEl) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    navEl.classList.add('active');
+  }
+  // Close mobile sidebar
+  closeSidebar();
+  // Scroll to top
+  document.querySelector('.content').scrollTop = 0;
+  window.scrollTo(0, 0);
+  // Fire custom event so child pages can react (e.g. lazy-load data)
+  document.dispatchEvent(new CustomEvent('sectionChanged', { detail: { section: sectionId } }));
+}
+
+// ── Debounce Utility
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+</script>
+
 <script>
 // ── Load Stats
 async function loadStats() {
@@ -397,7 +924,9 @@ async function loadRecent() {
 // ── Scanner Callback ──
 function handlePharmacistScan(data, rawText) {
   if (data.type === 'medicine' || data.type === 'batch') {
+    // Attempt to add directly to cart if available in pharmacist UI
     showToast('✅ Found: ' + data.medicine.name);
+    
   } else if (data.type === 'multiple_matches') {
     showToast('⚠️ Multiple matches found for ' + rawText + '. Use search.');
   }
@@ -744,7 +1273,7 @@ document.getElementById('prescInput').addEventListener('change', async function(
   try {
     const response = await fetch('/api/scan-prescription', { method: 'POST', body: formData });
     clearInterval(stageInterval);
-    let data = await response.json();
+    const data = await response.json();
   if(data && !Array.isArray(data) && data.data) { data = data.data; }
 
     if (!response.ok) {
@@ -861,7 +1390,7 @@ async function addPrescToCart(mid, btn) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: mid, qty: 1 })
     });
-    let data = await res.json();
+    const data = await res.json();
   if(data && !Array.isArray(data) && data.data) { data = data.data; }
     if (!res.ok) {
       showToast('❌ ' + (data.error || 'Failed to add to cart'));
@@ -910,5 +1439,147 @@ async function addAllSafeMatches() {
 */
 </script>
 
-{% include 'scanner_modal.html' %}
-{% endblock %}
+<!-- Scanner Modal -->
+<div class="modal-overlay" id="scannerModal">
+  <div class="modal" style="max-width: 500px; padding: 24px;">
+    <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:16px; margin-bottom:16px;">
+      <div style="font-size:1.2rem; font-weight:600; color:var(--text-primary);">📷 Scan Barcode / QR</div>
+      <button class="modal-close" onclick="closeScannerModal()" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.5rem; line-height:1;">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Camera Feed -->
+      <div id="reader" style="width: 100%; min-height: 300px; border-radius: 12px; overflow: hidden; background: #000; display:flex; justify-content:center; align-items:center; color:#fff;">
+        Initializing camera...
+      </div>
+      
+      <!-- Manual Entry -->
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border-color);">
+        <label for="manualBarcode" style="display:block; font-size:0.85rem; color:var(--text-secondary); margin-bottom:8px; font-weight:500;">Manual Entry (Fallback / Desktop Testing)</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="manualBarcode" placeholder="Enter barcode or ID..." style="flex:1; padding:10px 14px; border-radius:8px; border:1px solid var(--border-color); background:var(--bg-body); color:var(--text-primary); outline:none;">
+          <button onclick="submitManualBarcode()" class="btn btn-primary" style="padding:10px 16px; border-radius:8px; border:none; background:var(--accent-secondary); color:#fff; cursor:pointer; font-weight:600;">Lookup</button>
+        </div>
+      </div>
+      
+      <!-- Scan Result/Error Display -->
+      <div id="scanFeedback" style="margin-top:16px; padding:12px; border-radius:8px; display:none; font-size:0.9rem; text-align:center;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+  let html5QrcodeScanner = null;
+  // This variable stores the specific callback for when a barcode is resolved.
+  // It allows different dashboards (Admin, Pharmacist, Cashier) to do different things with the data.
+  let onScanSuccessCallback = null; 
+
+  function openScannerModal(callback) {
+    onScanSuccessCallback = callback;
+    document.getElementById('scannerModal').classList.add('active', 'open');
+    document.getElementById('scanFeedback').style.display = 'none';
+    document.getElementById('manualBarcode').value = '';
+    
+    startCamera();
+  }
+  
+  function closeScannerModal() {
+    document.getElementById('scannerModal').classList.remove('active', 'open');
+    if (html5QrcodeScanner) {
+      try {
+        html5QrcodeScanner.stop().then(() => {
+          html5QrcodeScanner.clear();
+        }).catch(err => {
+          console.error("Failed to stop scanner", err);
+        });
+      } catch(e) {}
+    }
+  }
+  
+  function startCamera() {
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+    .catch((err) => {
+      // If environment camera fails (e.g. desktop), try any camera
+      console.warn("Environment camera failed, trying default.", err);
+      html5QrcodeScanner.start({ facingMode: "user" }, config, onScanSuccess)
+      .catch((err2) => {
+        showScanFeedback("Camera error: " + err2, "error");
+        document.getElementById("reader").innerHTML = "Camera permission denied or no camera found.";
+      });
+    });
+  }
+
+  function onScanSuccess(decodedText, decodedResult) {
+    // Stop scanning once we get a hit to prevent multiple hits
+    html5QrcodeScanner.pause();
+    resolveBarcode(decodedText);
+  }
+
+  function submitManualBarcode() {
+    const val = document.getElementById('manualBarcode').value.trim();
+    if (!val) return;
+    resolveBarcode(val);
+  }
+
+  async function resolveBarcode(barcodeText) {
+    showScanFeedback("Looking up barcode: " + barcodeText + "...", "info");
+    try {
+      const res = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ barcode: barcodeText })
+      });
+      const data = await res.json();
+      
+      if (data.error) {
+        showScanFeedback(data.error, "error");
+        if (html5QrcodeScanner && html5QrcodeScanner.getState() === 2 /* PAUSED */) {
+            setTimeout(() => html5QrcodeScanner.resume(), 500); // Resume after 500ms
+        }
+        return;
+      }
+      
+      showScanFeedback("Success! Routing...", "success");
+      
+      // Close modal and pass data to caller
+      setTimeout(() => {
+        closeScannerModal();
+        if (onScanSuccessCallback) {
+          onScanSuccessCallback(data, barcodeText);
+        }
+      }, 500);
+      
+    } catch(err) {
+      console.error(err);
+      showScanFeedback("Network error looking up barcode.", "error");
+      if (html5QrcodeScanner && html5QrcodeScanner.getState() === 2) {
+          setTimeout(() => html5QrcodeScanner.resume(), 500);
+      }
+    }
+  }
+
+  function showScanFeedback(msg, type) {
+    const box = document.getElementById('scanFeedback');
+    box.style.display = 'block';
+    box.textContent = msg;
+    if (type === 'error') {
+      box.style.background = 'rgba(239, 68, 68, 0.1)';
+      box.style.color = '#ef4444';
+      box.style.border = '1px solid #ef4444';
+    } else if (type === 'success') {
+      box.style.background = 'rgba(16, 185, 129, 0.1)';
+      box.style.color = '#10b981';
+      box.style.border = '1px solid #10b981';
+    } else {
+      box.style.background = 'rgba(59, 130, 246, 0.1)';
+      box.style.color = '#3b82f6';
+      box.style.border = '1px solid #3b82f6';
+    }
+  }
+</script>
+
+</body>
+</html>

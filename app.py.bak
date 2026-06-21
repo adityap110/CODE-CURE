@@ -1,0 +1,727 @@
+"""
+CodeCure — AI-Powered Smart Pharmacy Management System
+Main Application (Modular Refactor)
+"""
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
+import os, json, traceback, re, io
+from datetime import datetime, date, timedelta
+from PIL import Image
+
+from config import Config
+from models import get_db, init_db, log_activity, record_sale
+from utils import (
+    sanitize, sanitize_dict, validate_medicine_data,
+    safe_int, safe_float, login_required, role_required,
+    days_until_expiry, get_expiry_status
+)
+
+app = Flask(__name__)
+app.config.from_object(Config)
+from models_sqlalchemy import db, Medicine, Activity, Sale, Supplier, User, MedicineBatch
+db.init_app(app)
+app.secret_key = Config.SECRET_KEY
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+# ─── DEMO USERS (will migrate to DB users table later) ────────────────────────
+
+USERS = {
+    "admin":      {"password": generate_password_hash("1234"), "role": "Admin"},
+    "pharmacist": {"password": generate_password_hash("1234"), "role": "Pharmacist"},
+    "cashier":    {"password": generate_password_hash("1234"), "role": "Cashier"},
+    "doctor":     {"password": generate_password_hash("1234"), "role": "Doctor"},
+}
+
+# ─── ERROR HANDLER ─────────────────────────────────────────────────────────────
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    traceback.print_exc()
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Internal server error"}), 500
+    return f"<pre>{traceback.format_exc()}</pre>", 500
+
+# ─── AUTH ROUTES ───────────────────────────────────────────────────────────────
+
+@app.route("/", methods=["GET", "POST"])
+def login():
+    if "user" in session:
+        return _redirect_by_role(session["role"])
+    error = None
+    if request.method == "POST":
+        u = request.form.get("username", "").strip().lower()
+        p = request.form.get("password", "").strip()
+        if u in USERS and check_password_hash(USERS[u]["password"], p):
+            session["user"] = u
+            session["role"] = USERS[u]["role"]
+            log_activity("Login", f"{u} logged in", u)
+            return _redirect_by_role(session["role"])
+        error = "Invalid credentials"
+    return render_template("login.html", error=error)
+
+
+def _redirect_by_role(role):
+    """Redirect user to the appropriate dashboard based on their role."""
+    role_routes = {
+        "Admin": "admin_dashboard",
+        "Pharmacist": "pharmacist_dashboard",
+        "Cashier": "cashier_dashboard",
+        "Doctor": "doctor_dashboard",
+    }
+    return redirect(url_for(role_routes.get(role, "dashboard")))
+
+@app.route("/logout")
+def logout():
+    user = session.pop("user", "unknown")
+    session.pop("role", None)
+    session.pop("cart", None)
+    log_activity("Logout", f"{user} logged out", user)
+    return redirect(url_for("login"))
+
+@app.route("/dashboard")
+def dashboard():
+    if "user" not in session:
+        return redirect(url_for("login"))
+    return render_template("index.html", user=session["user"], role=session["role"])
+
+
+# ─── ROLE-BASED DASHBOARDS ─────────────────────────────────────────────────────
+
+@app.route("/admin")
+@login_required
+def admin_dashboard():
+    return render_template("admin_dashboard.html", user=session["user"], role=session["role"])
+
+@app.route("/pharmacist")
+@login_required
+def pharmacist_dashboard():
+    return render_template("pharmacist_dashboard.html", user=session["user"], role=session["role"])
+
+@app.route("/cashier")
+@login_required
+def cashier_dashboard():
+    return render_template("cashier_dashboard.html", user=session["user"], role=session["role"])
+
+@app.route("/doctor")
+@login_required
+def doctor_dashboard():
+    return render_template("doctor_dashboard.html", user=session["user"], role=session["role"])
+
+# ─── SMART SCANNER / AI VISION API ───────────────────────────────────────────
+
+@app.route("/api/scan-medicine", methods=["POST"])
+@role_required("Admin", "Pharmacist", "Cashier")
+def api_scan_medicine():
+    """Accept an uploaded medicine image, use Gemini Vision to analyze the
+    packaging, and return extracted fields as structured JSON."""
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No image file provided"}), 400
+
+    try:
+        image = Image.open(file)
+        # Ensure RGB for Gemini
+        if image.mode not in ("RGB",):
+            image = image.convert("RGB")
+    except Exception:
+        return jsonify({"error": "Invalid or corrupted image file"}), 400
+
+    # ── Send image to Gemini Vision for analysis ──
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=Config.GEMINI_API_KEY)
+        vision_model = genai.GenerativeModel(Config.GEMINI_MODEL)
+
+        prompt = (
+            "You are a pharmacist AI analyzing an Indian medicine wrapper. "
+            "Extract the following into strict JSON with no markdown formatting or backticks: "
+            'name (the primary medicine name), '
+            'category (guess the medical category, e.g., Analgesic, Antibiotic, etc.), '
+            'expiry_date (Hunt for "EXP" or "Expiry". Format strictly as YYYY-MM-DD. '
+            'If only MM/YY is given, assume the last day of that month), '
+            'supplier (the manufacturer or pharmaceutical company name), '
+            'and price (Hunt for "MRP" or "Rs.". Extract ONLY the float number, '
+            'e.g., if it says "MRP Rs. 115.50", output 115.50). '
+            'If any value is entirely unreadable, return null for that key.'
+        )
+
+        response = vision_model.generate_content([prompt, image])
+        raw_text = response.text.strip()
+
+        # Strip markdown code fences if the model wraps the JSON
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("\n", 1)[-1]  # Remove first line
+            if raw_text.endswith("```"):
+                raw_text = raw_text[:-3].strip()
+
+        result = json.loads(raw_text)
+
+        # Ensure all expected keys exist
+        return jsonify({
+            "name": result.get("name") or "",
+            "category": result.get("category") or "",
+            "expiry_date": result.get("expiry_date") or "",
+            "supplier": result.get("supplier") or "",
+            "price": result.get("price")
+        })
+
+    except json.JSONDecodeError:
+        # AI returned non-JSON text — try to salvage what we can
+        return jsonify({
+            "name": raw_text[:100] if raw_text else "",
+            "category": "",
+            "expiry_date": "",
+            "supplier": "",
+            "price": None,
+            "warning": "AI response was not valid JSON — partial data returned"
+        })
+    except Exception as e:
+        return jsonify({"error": f"AI Vision analysis failed: {str(e)}"}), 500
+
+# ─── STATS API ─────────────────────────────────────────────────────────────────
+
+@app.route("/api/stats")
+@login_required
+def api_stats():
+    today = date.today().isoformat()
+    total = Medicine.query.count()
+    expired = Medicine.query.filter(Medicine.expiry_date != None, Medicine.expiry_date != "", Medicine.expiry_date <= today).count()
+    low = Medicine.query.filter(Medicine.quantity < Medicine.min_stock, db.or_(Medicine.expiry_date == None, Medicine.expiry_date == "", Medicine.expiry_date > today)).count()
+    ok = Medicine.query.filter(Medicine.quantity >= Medicine.min_stock, db.or_(Medicine.expiry_date == None, Medicine.expiry_date == "", Medicine.expiry_date > today)).count()
+    return jsonify({"total": total, "ok": ok, "low": low, "expired": expired})
+
+# ─── MEDICINES CRUD ────────────────────────────────────────────────────────────
+
+@app.route("/api/medicines", methods=["GET"])
+@login_required
+def api_medicines():
+    filter_type = request.args.get("filter", "all")
+    search = request.args.get("search", "").strip()
+    sort_col = request.args.get("sort", "name")
+    sort_dir = request.args.get("dir", "asc")
+    page = safe_int(request.args.get("page", 1), default=1, minimum=1)
+    per_page = safe_int(request.args.get("per_page", 50), default=50, minimum=1, maximum=200)
+    today = date.today().isoformat()
+
+    valid_cols = ["name", "category", "quantity", "expiry_date", "supplier", "price"]
+    if sort_col not in valid_cols:
+        sort_col = "name"
+    sort_dir_mongo = -1 if sort_dir == "desc" else 1
+
+    conn = get_db()
+    query_parts = []
+    if search:
+        query_parts.append({
+            "$or": [
+                {"name": {"$regex": search, "$options": "i"}},
+                {"category": {"$regex": search, "$options": "i"}},
+                {"supplier": {"$regex": search, "$options": "i"}}
+            ]
+        })
+
+    if filter_type == "low":
+        query_parts.append({"$expr": {"$lt": ["$quantity", "$min_stock"]}})
+    elif filter_type == "expiring":
+        query_parts.append({"expiry_date": {"$gt": today, "$lte": "2025-12-31"}})
+    elif filter_type == "expired":
+        query_parts.append({"expiry_date": {"$nin": [None, ""], "$lte": today}})
+        
+    query = {"$and": query_parts} if query_parts else {}
+
+    total = conn.execute(f"SELECT COUNT(*) FROM medicines {where}", params).fetchone()[0]
+    rows = conn.execute(
+        f"SELECT * FROM medicines {where} ORDER BY {sort_col} {sort_dir} LIMIT ? OFFSET ?",
+        params + [per_page, (page-1)*per_page]
+    ).fetchall()
+    rows = [dict(r) for r in rows]
+        
+    return jsonify({
+        "data": rows,
+        "total": total, "page": page, "per_page": per_page,
+        "pages": (total + per_page - 1) // per_page
+    })
+
+@app.route("/api/medicines", methods=["POST"])
+@role_required("Admin", "Pharmacist")
+def api_add_medicine():
+    data = request.json or {}
+    clean = sanitize_dict(data, ["name", "category", "supplier", "expiry_date"])
+    errors = validate_medicine_data({**data, **clean})
+    if errors:
+        return jsonify({"error": ", ".join(errors)}), 400
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO medicines (name,category,quantity,min_stock,expiry_date,supplier,price,created_at) VALUES (?,?,?,?,?,?,?,?)",
+            (clean["name"], clean.get("category",""), safe_int(data.get("quantity",0)),
+             safe_int(data.get("min_stock",10)), clean.get("expiry_date",""),
+             clean.get("supplier",""), safe_float(data.get("price",0)), datetime.utcnow().isoformat())
+        )
+        conn.commit()
+        log_activity("Add Medicine", clean["name"], session["user"])
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route("/api/medicines/<string:mid>", methods=["PUT"])
+@role_required("Admin", "Pharmacist")
+def api_update_medicine(mid):
+    data = request.json or {}
+    clean = sanitize_dict(data, ["name", "category", "supplier", "expiry_date"])
+    errors = validate_medicine_data({**data, **clean})
+    if errors:
+        return jsonify({"error": ", ".join(errors)}), 400
+    conn = get_db()
+    try:
+        conn.medicines.update_one(
+            {"_id": mid},
+            {"$set": {
+                "name": clean["name"],
+                "category": clean.get("category", ""),
+                "quantity": safe_int(data.get("quantity", 0)),
+                "min_stock": safe_int(data.get("min_stock", 10)),
+                "expiry_date": clean.get("expiry_date", ""),
+                "supplier": clean.get("supplier", ""),
+                "price": safe_float(data.get("price", 0))
+            }}
+        )
+        log_activity("Edit Medicine", f"ID {mid} updated", session["user"])
+        return jsonify({"success": True})
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route("/api/medicines/<string:mid>", methods=["DELETE"])
+@role_required("Admin")
+def api_delete_medicine(mid):
+    conn = get_db()
+    try:
+        row = conn.execute("SELECT name FROM medicines WHERE id=?", (mid,)).fetchone()
+        if not row:
+            return jsonify({"error": "Medicine not found"}), 404
+        conn.execute("DELETE FROM medicines WHERE id=?", (mid,))
+        conn.commit()
+        log_activity("Delete Medicine", row["name"], session["user"])
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+# ─── ALERTS ────────────────────────────────────────────────────────────────────
+
+@app.route("/api/alerts")
+@login_required
+def api_alerts():
+    today = date.today().isoformat()
+    warn_date = (date.today() + timedelta(days=7)).isoformat()
+    
+    low = Medicine.query.filter(Medicine.quantity < Medicine.min_stock).all()
+    expired = Medicine.query.filter(Medicine.expiry_date != None, Medicine.expiry_date != "", Medicine.expiry_date <= today).all()
+    expiring = Medicine.query.filter(Medicine.expiry_date > today, Medicine.expiry_date <= warn_date).all()
+    out = Medicine.query.filter(Medicine.quantity == 0).all()
+    
+    alerts = []
+    for r in out:
+        alerts.append({"id": str(r.id),"type":"out","severity":"critical","name":r.name,"detail":"Out of stock!"})
+    for r in expired:
+        alerts.append({"id": str(r.id),"type":"expired","severity":"critical","name":r.name,"detail":f"Expired on {r.expiry_date}"})
+    for r in low:
+        if r.quantity > 0:
+            alerts.append({"id": str(r.id),"type":"low","severity":"warning","name":r.name,"detail":f"Only {r.quantity} left (min {r.min_stock})","quantity":r.quantity,"min_stock":r.min_stock})
+    for r in expiring:
+        d = days_until_expiry(r.expiry_date)
+        alerts.append({"id": str(r.id),"type":"expiring","severity":"warning","name":r.name,"detail":f"Expires in {d} day(s)"})
+    return jsonify(alerts)
+
+# ─── RESTOCK / DISCARD ACTIONS ─────────────────────────────────────────────────
+
+@app.route("/api/medicines/<string:mid>/restock", methods=["POST"])
+@role_required("Admin", "Pharmacist")
+def api_restock_medicine(mid):
+    """Restock a medicine to a safe level (default: min_stock * 2, or provided qty)."""
+    data = request.json or {}
+    conn = get_db()
+    try:
+        row = conn.medicines.find_one({"_id": mid})
+        if not row:
+            return jsonify({"error": "Medicine not found"}), 404
+        new_qty = safe_int(data.get("quantity", 0))
+        if new_qty <= 0:
+            new_qty = row["min_stock"] * 2  # Default: double the minimum
+        conn.medicines.update_one({"_id": mid}, {"$set": {"quantity": new_qty}})
+        log_activity("Restock", f"{row['name']} restocked to {new_qty} units", session["user"])
+        return jsonify({"success": True, "name": row["name"], "new_quantity": new_qty})
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route("/api/medicines/<string:mid>/discard", methods=["POST"])
+@role_required("Admin", "Pharmacist")
+def api_discard_medicine(mid):
+    """Discard a medicine by setting quantity to 0 (for expired/damaged items)."""
+    conn = get_db()
+    try:
+        row = conn.medicines.find_one({"_id": mid})
+        if not row:
+            return jsonify({"error": "Medicine not found"}), 404
+        conn.medicines.update_one({"_id": mid}, {"$set": {"quantity": 0}})
+        log_activity("Discard", f"{row['name']} discarded ({row['quantity']} units removed)", session["user"])
+        return jsonify({"success": True, "name": row["name"], "discarded_qty": row["quantity"]})
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route("/api/activity")
+@login_required
+def api_activity():
+    conn = get_db()
+    rows = list(conn.activity.find().sort("timestamp", -1).limit(20))
+    for r in rows:
+        r["id"] = str(r["_id"])
+        del r["_id"]
+    return jsonify(rows)
+
+# ─── BILLING & POS ────────────────────────────────────────────────────────────
+
+@app.route("/api/cart", methods=["GET"])
+@login_required
+def api_cart_get():
+    cart = session.get("cart", [])
+    conn = get_db()
+    cart_items = []
+    for item in cart:
+        try:
+            m = conn.execute("SELECT id, name, price, quantity FROM medicines WHERE id=?", (item["id"],)).fetchone()
+            if m and m["quantity"] >= item["qty"]:
+                cart_items.append({
+                    "id": str(m["_id"]), "name": m["name"], "price": m["price"],
+                    "qty": item["qty"], "subtotal": m["price"] * item["qty"]
+                })
+        except InvalidId:
+            pass
+    total = sum(i["subtotal"] for i in cart_items)
+    return jsonify({"items": cart_items, "total": total})
+
+@app.route("/api/cart", methods=["POST"])
+@role_required("Admin", "Pharmacist", "Cashier")
+def api_cart_add():
+    data = request.json or {}
+    mid = data.get("id")
+    qty = safe_int(data.get("qty", 1), default=1, minimum=1)
+    if not mid:
+        return jsonify({"error": "Invalid item"}), 400
+    conn = get_db()
+    try:
+        m = conn.execute("SELECT quantity FROM medicines WHERE id=?", (mid,)).fetchone()
+        if not m:
+            return jsonify({"error": "Medicine not found"}), 404
+        if m["quantity"] < qty:
+            return jsonify({"error": f"Insufficient stock. Only {m['quantity']} available."}), 400
+        cart = session.get("cart", [])
+        for item in cart:
+            if item["id"] == mid:
+                item["qty"] = min(item["qty"] + qty, m["quantity"])
+                break
+        else:
+            cart.append({"id": mid, "qty": qty})
+        session["cart"] = cart
+        return jsonify({"success": True, "cart_count": len(cart)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route("/api/cart/<string:mid>", methods=["DELETE"])
+@login_required
+def api_cart_remove(mid):
+    cart = session.get("cart", [])
+    cart = [i for i in cart if i["id"] != mid]
+    session["cart"] = cart
+    return jsonify({"success": True})
+
+@app.route("/api/cart/clear", methods=["POST"])
+@login_required
+def api_cart_clear():
+    session["cart"] = []
+    return jsonify({"success": True})
+
+@app.route("/api/checkout", methods=["POST"])
+@role_required("Admin", "Pharmacist", "Cashier")
+def api_checkout():
+    cart = session.get("cart", [])
+    if not cart:
+        return jsonify({"error": "Cart is empty"}), 400
+    conn = get_db()
+    user = session["user"]
+    invoice_items = []
+    try:
+        for item in cart:
+            mid, qty = item["id"], item["qty"]
+            m = conn.medicines.find_one({"_id": mid})
+            if not m or m["quantity"] < qty:
+                return jsonify({"error": f"Insufficient stock for {m['name'] if m else 'unknown'}"}), 400
+            conn.medicines.update_one({"_id": mid}, {"$inc": {"quantity": -qty}})
+            invoice_items.append({"name": m["name"], "price": m["price"], "qty": qty, "subtotal": m["price"] * qty})
+
+        total = sum(i["subtotal"] for i in invoice_items)
+        invoice_no = f"INV-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        log_activity("Sale Completed", f"{invoice_no} - ₹{total:.2f}", user)
+        record_sale(invoice_no, total, json.dumps(invoice_items), user)
+
+        session["cart"] = []
+        return jsonify({
+            "success": True, "invoice": invoice_no,
+            "items": invoice_items, "total": total,
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "cashier": user
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ─── EXPORTS & REPORTS ─────────────────────────────────────────────────────────
+
+@app.route("/api/export/csv")
+@login_required
+def api_export_csv():
+    conn = get_db()
+    rows = list(conn.medicines.find().sort("name", 1))
+    import io, csv
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Name", "Category", "Quantity", "Min Stock", "Expiry Date", "Supplier", "Price (₹)", "Stock Value (₹)"])
+    for r in rows:
+        stock_value = r.get("quantity", 0) * r.get("price", 0)
+        writer.writerow([r.get("name"), r.get("category"), r.get("quantity"), r.get("min_stock"), r.get("expiry_date") or "", r.get("supplier"), f"{r.get('price',0):.2f}", f"{stock_value:.2f}"])
+    return output.getvalue(), 200, {"Content-Type": "text/csv", "Content-Disposition": "attachment; filename=inventory.csv"}
+
+@app.route("/api/export/alerts/csv")
+@login_required
+def api_export_alerts_csv():
+    conn = get_db()
+    today = date.today().isoformat()
+    rows = list(conn.medicines.find({
+        "$or": [
+            {"$expr": {"$lt": ["$quantity", "$min_stock"]}},
+            {"expiry_date": {"$nin": [None, ""], "$lte": today}}
+        ]
+    }).sort("name", 1))
+    import io, csv
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Name", "Quantity", "Min Stock", "Expiry Date", "Alert Type"])
+    for r in rows:
+        atype = "Low Stock" if r.get("quantity", 0) < r.get("min_stock", 0) else "Expired"
+        writer.writerow([r.get("name"), r.get("quantity"), r.get("min_stock"), r.get("expiry_date") or "", atype])
+    return output.getvalue(), 200, {"Content-Type": "text/csv", "Content-Disposition": "attachment; filename=alerts.csv"}
+
+@app.route("/api/stock-valuation")
+@login_required
+def api_stock_valuation():
+    conn = get_db()
+    pipeline = [{"$group": {"_id": None, "total": {"$sum": {"$multiply": ["$quantity", "$price"]}}}}]
+    result = list(conn.medicines.aggregate(pipeline))
+    total = result[0]["total"] if result else 0
+    return jsonify({"stock_valuation": total})
+
+@app.route("/api/chart/category")
+@login_required
+def api_chart_category():
+    conn = get_db()
+    pipeline = [
+        {"$group": {"_id": "$category", "total": {"$sum": "$quantity"}}},
+        {"$project": {"category": "$_id", "total": 1, "_id": 0}}
+    ]
+    rows = list(conn.medicines.aggregate(pipeline))
+    return jsonify(rows)
+
+@app.route("/api/search")
+@login_required
+def api_search():
+    """Search medicines by name, category, or supplier"""
+    q = request.args.get("q", "").strip()
+    if not q or len(q) < 2:
+        return jsonify([])
+    conn = get_db()
+    rows = list(conn.medicines.find({
+        "$or": [
+            {"name": {"$regex": q, "$options": "i"}},
+            {"category": {"$regex": q, "$options": "i"}},
+            {"supplier": {"$regex": q, "$options": "i"}}
+        ]
+    }).sort("name", 1).limit(15))
+    for r in rows:
+        r["id"] = str(r["_id"])
+        del r["_id"]
+    return jsonify(rows)
+
+# ─── ANALYTICS API (NEW) ──────────────────────────────────────────────────────
+
+@app.route("/api/analytics/sales")
+@login_required
+def api_analytics_sales():
+    """Weekly sales data for charts."""
+    conn = get_db()
+    thirty_days_ago = (datetime.utcnow() - timedelta(days=30)).isoformat()
+    pipeline = [
+        {"$match": {"timestamp": {"$gte": thirty_days_ago}}},
+        {"$group": {
+            "_id": {"$substr": ["$timestamp", 0, 10]},
+            "count": {"$sum": 1},
+            "revenue": {"$sum": "$total_amount"}
+        }},
+        {"$project": {"sale_date": "$_id", "count": 1, "revenue": 1, "_id": 0}},
+        {"$sort": {"sale_date": 1}}
+    ]
+    rows = list(conn.sales.aggregate(pipeline))
+    return jsonify(rows)
+
+@app.route("/api/analytics/top-medicines")
+@login_required
+def api_analytics_top():
+    """Top selling medicines from sales data."""
+    conn = get_db()
+    thirty_days_ago = (datetime.utcnow() - timedelta(days=30)).isoformat()
+    sales = list(conn.sales.find({"timestamp": {"$gte": thirty_days_ago}}, {"items_json": 1}))
+    counts = {}
+    for s in sales:
+        try:
+            items = json.loads(s.get("items_json", "[]"))
+            for item in items:
+                name = item.get("name", "Unknown")
+                counts[name] = counts.get(name, 0) + item.get("qty", 0)
+        except (json.JSONDecodeError, TypeError):
+            pass
+    top = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    return jsonify([{"name": n, "qty": q} for n, q in top])
+
+# ─── AI MEDICAL ASSISTANT CHATBOT (GEMINI INTEGRATION) ────────────────────────
+
+import google.generativeai as genai
+
+GEMINI_API_KEY = Config.GEMINI_API_KEY
+genai.configure(api_key=GEMINI_API_KEY)
+gemini_model = genai.GenerativeModel(Config.GEMINI_MODEL)
+def get_inventory_context():
+    """Return a compact inventory summary for the AI prompt.
+    Only includes aggregate counts and lists of flagged items (low stock / expired)."""
+    conn = get_db()
+    today = date.today().isoformat()
+    try:
+        total = conn.execute("SELECT COUNT(*) FROM medicines").fetchone()[0]
+        low = conn.execute("SELECT COUNT(*) FROM medicines WHERE quantity < min_stock").fetchone()[0]
+        expired = conn.execute("SELECT COUNT(*) FROM medicines WHERE expiry_date != '' AND expiry_date <= ?", (today,)).fetchone()[0]
+        ok = total - low - expired
+
+        low_items = [dict(r) for r in conn.execute("SELECT name, quantity, min_stock FROM medicines WHERE quantity < min_stock").fetchall()]
+        exp_items = [dict(r) for r in conn.execute("SELECT name, quantity, expiry_date FROM medicines WHERE expiry_date != '' AND expiry_date <= ?", (today,)).fetchall()]
+    except Exception:
+        pass
+
+    ctx = f"INVENTORY SUMMARY:\n- Total Medicine Types: {total}\n- In Stock (OK): {ok}\n- Low Stock: {low}\n- Expired: {expired}\n"
+
+    if low_items:
+        ctx += "\nLOW STOCK ITEMS:\n"
+        for m in low_items:
+            ctx += f"- {m['name']}: {m['quantity']} units (min required: {m['min_stock']})\n"
+
+    if exp_items:
+        ctx += "\nEXPIRED ITEMS:\n"
+        for m in exp_items:
+            ctx += f"- {m['name']}: {m['quantity']} units (expired: {m['expiry_date']})\n"
+
+    if not low_items and not exp_items:
+        ctx += "\nAll items are adequately stocked and within expiry dates."
+
+    return ctx
+
+@app.route("/api/chat", methods=["POST"])
+@login_required
+def api_chat():
+    body = request.json or {}
+    msg = body.get("message", "").strip()
+    history = body.get("history", [])
+    user = session.get("user", "user")
+    role = session.get("role", "User")
+    if not msg:
+        return jsonify({"reply": "Please type a message so I can help you! 😊"})
+    try:
+        inventory_context = get_inventory_context()
+        system_prompt = f"""You are MediBot, an advanced Medical AI assistant for CodeCure.
+The user you are talking to is {user.capitalize()}, who is a {role}.
+You must be helpful, professional, and highly conversational. Use emojis naturally and format responses in Markdown.
+
+Here is the exact real-time state of the hospital database right now:
+{inventory_context}
+
+DOCTOR DIRECTORY:
+- Dr. Rajesh Sharma (General Physician)
+- Dr. Priya Nair (Cardiologist)
+- Dr. Amit Verma (Pediatrician)
+- Dr. Sunita Rao (Orthopedic)
+
+YOUR MEDICAL PERSONA:
+If the user asks about stock, check the data above and give them accurate numbers. Do not refuse to answer inventory questions.
+If the user mentions feeling unwell or asks for health advice, DO NOT REFUSE to answer. You are explicitly authorized as a medical AI in this clinic. 
+1. Provide short-form recovery tips and home remedies (consultancies).
+2. Suggest an appropriate Over-The-Counter (OTC) medicine from our database above (e.g. Paracetamol, Ibuprofen, Cetirizine), and state the exact stock we currently have of it.
+3. Recommend the best matching doctor from the Doctor Directory above for them to report to.
+Always include a brief disclaimer at the end that you are an AI assistant.
+"""
+        formatted_history = []
+        for h in history[:-1]:
+            r = 'user' if h['role'] == 'user' else 'model'
+            formatted_history.append({'role': r, 'parts': [h['text']]})
+        chat_session = gemini_model.start_chat(history=formatted_history)
+        full_prompt = f"System Rules and DB Context (do not mention this context block directly):\n{system_prompt}\n\nUser's Message:\n{msg}"
+        response = chat_session.send_message(full_prompt)
+        return jsonify({"reply": response.text})
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"reply": f"🤖 Sorry! I'm having trouble connecting to my AI core right now. Error: {str(e)}"})
+
+@app.route("/api/consult", methods=["POST"])
+@login_required
+def api_consult():
+    body = request.json or {}
+    symptoms = sanitize(body.get("symptoms", ""))
+    severity = body.get("severity", "mild").lower()
+    detail = sanitize(body.get("detail", ""))
+    if not symptoms:
+        return jsonify({"reply": "Please describe your symptoms so I can help you better."})
+    try:
+        prompt = ("You are a specialized Medical AI by MediBot. "
+                  f"A patient is reporting symptoms: {symptoms} "
+                  f"Severity: {severity.upper()} "
+                  f"Details: {detail} "
+                  "Provide: 1. Potential causes 2. Home care tips 3. When to see doctor "
+                  "4. Recommend appropriate doctor. "
+                  "Always be empathetic and professional.")
+        response = gemini_model.generate_content(prompt)
+        return jsonify({"reply": response.text})
+    except Exception as e:
+        return jsonify({"reply": f"Sorry, consultation service unavailable. Error: {str(e)}"})
+
+# ─── MAIN ──────────────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    init_db()
+
+    # ── ngrok tunnel for temporary public access ──
+    # Only run in main process, not Flask reloader subprocess
+    if not os.environ.get("WERKZEUG_RUN_MAIN"):
+        try:
+            from pyngrok import ngrok, conf
+            ngrok_token = os.environ.get("NGROK_AUTHTOKEN", "")
+            if ngrok_token:
+                conf.get_default().auth_token = ngrok_token
+                public_url = ngrok.connect(5000)
+                print("\n" + "=" * 60)
+                print("[LIVE] Your temporary live website link: " + str(public_url))
+                print("=" * 60 + "\n")
+            else:
+                print("\n[INFO] To enable public URL, set NGROK_AUTHTOKEN env variable.")
+                print("[INFO] Get your free token at: https://dashboard.ngrok.com/signup\n")
+        except ImportError:
+            print("\n[TIP] Install pyngrok (pip install pyngrok) for a public URL")
+        except Exception as e:
+            print("\n[WARN] ngrok tunnel failed: " + str(e))
+
+    app.run(debug=True)

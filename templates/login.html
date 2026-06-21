@@ -4,10 +4,17 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="description" content="CodeCure — Smart Medical Inventory Management System Login"/>
-<title>CodeCure — Login</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<title>CodeCure — Secure Login</title>
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo_icon.png') }}"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* Branding Classes */
+  @keyframes float-pulse {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-3px); }
+  }
   
   :root {
     --bg-body: #0F172A;
@@ -92,77 +99,28 @@
     z-index: 0;
   }
 
-  /* Left Side Content Construction using empty divs */
-  .orb1 {
+  /* Left Side Content Construction */
+  .left-panel {
     position: absolute;
-    top: calc(50vh - 140px); left: 60px;
-    width: 44px; height: 44px;
-    border: 2px solid #FFFFFF;
-    border-radius: 6px;
-    z-index: 5;
+    left: 0; top: 0; bottom: 0; width: 50vw;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 60px; z-index: 5;
   }
-  .orb1::before {
-    content: ""; position: absolute;
-    top: 20px; left: 12px; right: 12px; height: 2px;
-    background: #FFFFFF;
+  .hero-logo {
+    height: 100px; width: auto; max-width: 100%; margin-bottom: 20px;
+    object-fit: contain; align-self: flex-start;
+    animation: float-pulse 3s ease-in-out infinite alternate;
   }
-  .orb1::after {
-    content: ""; position: absolute;
-    left: 20px; top: 12px; bottom: 12px; width: 2px;
-    background: #FFFFFF;
+  .left-panel h1 {
+    color: var(--text-primary); font-size: 3.5rem; font-weight: 700;
+    line-height: 1.1; letter-spacing: -1px; margin-bottom: 16px;
   }
-
-  .orb2 {
-    position: absolute;
-    top: calc(50vh - 60px); left: 60px;
-    color: var(--text-primary);
-    font-size: 3.5rem;
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -1px;
-    z-index: 5;
+  .left-panel p {
+    color: var(--accent-secondary); font-size: 1.05rem; line-height: 1.6;
+    max-width: 400px; margin-bottom: 32px;
   }
-  .orb2::before { content: "CodeCure"; white-space: pre-wrap; }
-
-  .orb3 {
-    position: absolute;
-    top: calc(50vh + 20px); left: 60px;
-    color: var(--accent-secondary);
-    font-size: 1.05rem;
-    line-height: 1.6;
-    max-width: 400px;
-    z-index: 5;
-  }
-  .orb3::before { content: "Smart Medical Inventory Portal. Secure access for authorized personnel only."; }
-
-  .geo-triangle {
-    position: absolute;
-    bottom: 60px; left: 60px;
-    width: calc(50vw - 120px);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 24px;
-    color: var(--text-primary);
-    z-index: 5;
-  }
-  .geo-triangle::before {
-    content: "System Status: Optimal";
-    display: block;
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin-bottom: 8px;
-    padding-left: 32px;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%23FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>') no-repeat left center;
-    background-size: 22px;
-  }
-  .geo-triangle::after {
-    content: "All core systems operational. Last maintenance check completed 0400 hours.";
-    display: block;
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-  }
+  @media (max-width: 1024px) { .hero-logo { height: 80px; } }
+  @media (max-width: 768px) { .hero-logo { height: 60px; } }
 
   .geo-square, .geo-circle, .particles, .status-bar, .theme-switcher { display: none; }
 
@@ -326,7 +284,7 @@
   .toggle-pw:hover { color: var(--accent-primary); }
   .toggle-pw svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  .hint, .error-box { display: none; } /* Hide hint for clean UI */
+  .hint { display: none; } /* Hide hint for clean UI */
 
   .btn-login {
     width: 100%; padding: 14px;
@@ -365,17 +323,19 @@
     body { flex-direction: column; background: var(--bg-body); }
     body::after { display: none; }
     .card { width: 100vw; padding: 40px 20px; }
-    .orb1, .orb2, .orb3, .geo-triangle { display: none; } /* Hide left panel on mobile */
+    .left-panel { display: none; } /* Hide left panel on mobile */
   }
 </style>
 </head>
 <body>
 
 <!-- Background elements -->
-<div class="orb orb1"></div>
-<div class="orb orb2"></div>
-<div class="orb orb3"></div>
-<div class="geo-shape geo-triangle"></div>
+  <div class="left-panel">
+    <img src="{{ url_for('static', filename='images/logo_icon.png') }}" class="hero-logo" alt="CC+">
+    <h1>CodeCure</h1>
+    <p>Smart Medical Inventory Portal.<br>Secure access for authorized personnel only.</p>
+    
+  </div>
 <div class="geo-shape geo-square"></div>
 <div class="geo-shape geo-circle"></div>
 <div class="particles" id="particles"></div>
@@ -405,10 +365,9 @@
 
 <!-- Login Card -->
 <div class="card" id="login-card">
-  <div class="logo-wrap">
-    <div class="logo-icon">🏥</div>
-    <div class="logo-title">Code<span>Cure</span></div>
-    <div class="logo-sub">Smart Medical Inventory</div>
+  <div style="margin-bottom: 40px;">
+    <h2 style="font-size: 2.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">Sign In</h2>
+    <p style="font-size: 1rem; color: var(--text-secondary); font-weight: 400;">Enter your credentials to access the secure clinical network.</p>
   </div>
 
   <!-- Role quick-fill tabs -->
